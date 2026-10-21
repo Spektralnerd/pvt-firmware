@@ -1,0 +1,183 @@
+PINNACLE VIDEO TRANSFER - TEST AI: BREITE AN DIE KAMERA ANGEPASST (528x576i) + TON
+Stand 20.10.2026, 22:30. EXPERIMENTELL. Basis: AE (Vorfuehrstand). Breite 528 am Geraet bestaetigt (VID00007/08/10).
+Gleicher Updateablauf wie immer, NUR EINE BIN auf dem Stick. Test immer auf LED1.
+
+IDEE
+Weniger Video-Mbit nur zusammen mit weniger Pixeln. Die Kamera (AVC 571, Sensor 512
+Punkte waagerecht, 400 TVL) liefert kaum etwas oberhalb ~5 MHz; 528 Abtastwerte
+tragen bis 4,95 MHz. Senkrecht bleibt 576 mit Halbbildern (Interlacing bleibt).
+Ergebnis: mehr Bits pro Bildpunkt als AE, obwohl die Datenrate sinkt.
+  AE  720x576 @ 5,0 Mbit/s = 0,48 bit/Bildpunkt
+  01  528x576 @ 4,5 Mbit/s = 0,59 bit/Bildpunkt (+23 %), mit Ton 192: Summe 4,69
+  02  528x576 @ 4,8 Mbit/s = 0,63 bit/Bildpunkt (+31 %), mit Ton 192: Summe 4,99
+Herleitung und Messung an deinen AE-Clips: analyse/BEFUND_BREITE_DE.txt
+
+NACHTRAG 20.10.2026, 12:30 - MESSUNG: DIE BREITE SPART 3-7 %, NICHT 27 %
+Bits pro Bildpunkt sind das falsche Mass. Gemessen mit x264, beschraenkt auf die
+Werkzeuge des MG (Main, CAVLC, keine B-Bilder, 2 Referenzen, GOP 50, Halbbilder),
+an zwei 40-s-Stuecken deiner AE-Clips; Kontrolle mit verschobener Quelle, damit der
+720er-Weg keinen Rastervorteil aus der alten MG-Kodierung hat (analyse/RD_ERGEBNIS.txt):
+  - Im Band, das die Kamera liefert (bis 4,95 MHz): 528 @ 4,5 Mbit/s entspricht
+    720 @ 4,6-4,85; 528 @ 4,8 entspricht 720 @ 4,85-5,1.
+  - Gleiche Qualitaet wie AE (720 @ 5,0) braucht bei 528 etwa 4,65-4,85 Mbit/s.
+  - Vollband (mit dem Rauschboden ueber 5 MHz) ist 528 bei gleicher Rate schlechter;
+    dieser Anteil ist aber Rauschen, 528 nimmt es weg.
+Grund: die Bits gehen in Bewegung und Rauschen (P-Bilder sind halb so gross wie
+I-Bilder, I-Bilder nur 4 % der Bits), nicht in die Spaltenzahl. Erwartung damit:
+02 (528 @ 4,8 + Ton 192) liegt etwa auf AE-Niveau, 01 knapp darunter.
+Alternative ohne Breitenrisiko: AG_4800_192 (720, -4 % Video, im Band -0,17 dB).
+Der Unterschied zwischen beiden Wegen (ca. 0,2 dB) ist mit dem Auge nicht zu sehen.
+
+BUILDS (alle aus AE, nur Zahlenwerte; LED2/LED3 behalten ihre AE-Regelung)
+  01_INSTALL_AI_528_4500_192   Breite 528, Video 4500, Audio 192. ERSTER TEST.
+  02_INSTALL_AI_528_4800_192   Breite 528, Video 4800, Audio 192. Wenn 01 sauber ist.
+  03_BEI_BEDARF_AI_528_4500_192_AUDIOPUFFER_256
+                               wie 01, dazu MG-Audiopuffer p04 48 -> 256 Seiten
+                               (wie AH). Nur wenn 01 mit Ton scheitert.
+  04_RETURN_AE                 unveraendertes AE.
+Patches: Breite an 4 Stellen (0x2B228 Wahl, 0x0C13C/0x2B044/0x2E062 Pruefungen
+720 -> 528), Videoziel 0x08108/0x2C002, RC7 x3 = Video*5000, RC11 x3 = Video*1000,
+Audio 0x2B324; bei 03 zusaetzlich p04 0x2A62A.
+Nur PAL. NTSC nimmt weiter 720x480 auf, aber ohne die RC-Erweiterung -> fuer NTSC AE nehmen.
+
+TESTPLAN
+1. Bildprobe: 01 einspielen, Kaltstart, LED1, 1-2 min. Ton darf schon dran sein.
+      python3 werkzeug/pvt_check.py VID0000x.MP4 --out ergebnisse
+   pvt_check ist jetzt v1.3 und zeigt drei Groessen getrennt:
+      Container:  avc1 528x576, tkhd 528x576     (schreibt der ColdFire ins MP4)
+      SPS:        528x576, Pixel 16:11 -> Anzeige 768x576 (1.333:1, ...)   (aus dem H.264-Strom)
+   dazu "Halbbilder (field_pic) in allen Bildern" und leer 0. Erwartung: alle drei 528x576.
+   Beleg, dass der ColdFire die gewaehlte Groesse in avc1/tkhd schreibt: die Aufnahmen mit
+   Original-Firmware auf LED1 haben 320x240 in SPS, avc1 und tkhd (Pixel 1:1), LED3 720x576.
+   Steht bei AI in avc1/tkhd trotzdem 720, bitte den Bericht schicken.
+   In VLC: volles 4:3-Bild ohne schwarze Raender, nichts abgeschnitten, nicht
+   gestaucht, Bewegung fluessig (Halbbilder). Gegenprobe unter CachyOS:
+      ffprobe -v error -select_streams v:0 -show_entries stream=width,height,sample_aspect_ratio,display_aspect_ratio VID0000x.MP4
+   Erwartet 528x576, SAR 16:11, DAR 4:3. Feine Streifen (Hemd, Gitter) einmal anschauen:
+   Moire waere ein Hinweis auf fehlenden Tiefpass im MG (dann Ausweichbreite 640).
+   Schwarze Raender, abgeschnittene Seiten oder falsches Seitenverhaeltnis -> Bild/
+   Bericht schicken, nicht weitertesten.
+2. Ton: 01, dieselbe Tonquelle wie bei VID00006, hoher Pegel, 2-3 min.
+   Sauber heisst: "leer 0", "Ton minus Video" unter 0,2 s, Audio-Dauer = Video-Dauer,
+   Audio-Datenrate plausibel (um 190 kbit/s), Ton in VLC sauber und synchron.
+3. 01 sauber -> 02 genauso. 02 sauber -> 02 ist Kandidat, sonst bleibt 01.
+4. 01 mit Ton kaputt -> 03. 03 sauber -> der Tonpuffer war der Engpass.
+   03 ebenfalls kaputt -> Ton liegt nicht an der Datenrate; Bericht schicken.
+5. Freigabe erst nach 30 min mit Ton UND einem Lauf ueber den 4-GiB-Wechsel
+   (> 2 h bei 4,7 Mbit/s).
+
+HOERTEST ALS MESSUNG (werkzeug/ton_schleife.py, braucht ffmpeg + python-numpy)
+Die 12,168-s-Audiodatei am Tablet in Dauerschleife an den Eingang. Danach:
+   python3 werkzeug/ton_schleife.py VID0000x.MP4 --out ergebnisse
+Vergleicht jede Sekunde mit derselben Stelle eine Schleife davor und danach. Meldet
+"Ton stimmt bis X s" und die falschen Abschnitte. Erkennt auch Fehler, bei denen alle
+AAC-Bloecke da sind und sauber decodieren (VID00010: Bloecke bis 80 s vollstaendig,
+Ton aber ab 67 s falsch). Die Schleifenlaenge bestimmt es aus der Aufnahme selbst;
+12,168 = das Tablet loopt lueckenlos. Gesund: >= 0,95; unter 0,60 ist der Ton falsch.
+
+NUR VIDEO - GEPRUEFT 20.10. 23:33 (VID00012, 528, Ton aus): AUFNAHME MAKELLOS, INDEX KAPUTT
+60 s, 1.509 Bilder, 5,25 Mbit/s Video, 0 leer / 0 klein / 0 Teilbild, mdhd = stts (kein Bild
+fehlt), QP 21-27. Erster Lauf ohne einen einzigen Aussetzer bei dieser Rate - der Tonpfad des
+Hosts ist weg und mit ihm die Mauer, zumindest fuer 60 s.
+Aber: der ColdFire schreibt den Index (moov) mit richtigen Boxgroessen, fuellt die Tabellen
+stsz/stco jedoch nur mit den letzten ~120 Eintraegen (vermutlich wird der Tabellenpuffer sonst
+mit den Tonbloecken weggeschrieben). Player finden die Bilder nicht -> "laesst sich nicht abspielen".
+Reparatur (geprueft, ffmpeg decodiert danach fehlerfrei):
+   python3 werkzeug/mp4_reparatur.py VID00012.MP4     -> VID00012_repariert.MP4
+Das Werkzeug buendelt die NAL-Einheiten im mdat zu Bildern (Halbbildpaare), baut stts/stsz/
+stss/stsc/stco neu, nimmt SPS/PPS aus dem vorhandenen stsd und prueft die eigene Buendelung
+gegen die vorhandenen Index-Eintraege (muessen zum Ende passen). Der Bildstrom bleibt byte-
+identisch. Ohne Reparatur evtl. gangbar: Ton 8 kbit/s statt aus (Bloecke 21 Byte, 47/s) -
+dann laeuft der Tonpfad "leer" mit und der Schreiber verhaelt sich normal. Ungeprueft.
+
+TON AUS (NUR VIDEO), 20.10. 22:30 - Herleitung vor dem Test
+build_ai.py und der Baukasten kennen jetzt Audio 0 = Ton aus. Dann wird nicht die Anforderung
+geaendert, sondern ein Byte: 0x0C363 (moveq #1 -> #2). Das ist der Wert, den der ColdFire dem
+MG als ENC_INPUT_SELECT/ENC_AV_SELECT schickt (Objekt 3, Param 40 und 17): 1 = Audio+Video,
+2 = nur Video. Im CF-Modell aendert sich in der ganzen Befehlskette nur dieser Wert (beide
+Normen, alle LEDs). Der MG kodiert dann keinen Ton und muxt ohne Tonspur ("Mux w/o audio");
+der ColdFire bekommt keine Tonbloecke mehr. Offen ist nur, ob sein MP4-Schreiber damit klar-
+kommt (Datei schliesst, VLC spielt). Test: 2 min auf LED1, pvt_check muss 0 Tonbloecke melden.
+Gewinn: der Tonpfad des ColdFire faellt ganz weg, auch bei eingestecktem Kabel; bei Stille war
+er vorher schon fast kostenlos, bei echtem Ton kostete er 96 kbit/s "Video-Reserve" (5000+96
+kippte, 4500+96 hielt). Ohne Ton sollte 5000 wieder wie AE laufen.
+  python3 werkzeug/build_ai.py build 04_RETURN_AE/CFUPDATE.BIN <Ordner> 720 5000 0
+  -> AE_NURVIDEO, 1 Byte, SHA 5944faf96cd86771040aaff4557e9f5e0d2d756771a324074df100e57e377ccf
+Mono (ein Kanal) geht ueber Zahlenwerte nicht: AI_CHANNELS wird vom ColdFire nie gesendet.
+Noetig ist es auch nicht: bei Monoquelle (Kameramikrofon) kodiert AAC Joint-Stereo fast wie
+Mono; die Blockgroesse bestimmt allein die kbit/s-Zahl. Also 64 oder 48 statt 96 waehlen.
+
+FREIE WERTE (build_ai.py v2 und Baukasten 1.3, 20.10. 23:00)
+Keine kuenstlichen Grenzen mehr: Video, Audio, Breite beliebig; neu Hoehe, NTSC-Groesse,
+GOP je LED, Videopuffer p03, TF je LED, rein. Gesperrt nur, was nicht in die Stellen passt.
+  python3 werkzeug/build_ai.py build 04_RETURN_AE/CFUPDATE.BIN <Ordner> 544 6000 0 hoehe=288 ntsc=544x240 gop=25 p03=1536 tf=3,2,5
+  python3 werkzeug/build_ai.py build 04_RETURN_AE/CFUPDATE.BIN <Ordner> 528 4500 96 rein=1   -> 13508fa0... (= Baukasten)
+Stellen (per Mutationstest im CF-Modell bestaetigt, jede aendert genau einen MG-Parameter):
+  Hoehe PAL   0x2B234 Wahl -> DecimationV, 0x2B052 Encoder-Erw., 0x2E056 RC-Erw.   (576)
+  NTSC Breite 0x2B81E Wahl, 0x0C042 D1-Vergleich (Pixelformat 8:9), 0x2B924 Encoder-Erw. (720)
+  NTSC Hoehe  0x2B82A Wahl, 0x2B932 Encoder-Erw., 0x2E044 RC-Erw.                  (480)
+  GOP         0x2C086 / 0x2C090 / 0x2C09A je LED (MG Objekt 3, Param 24)           (50)
+  Die RC-Erweiterung prueft EINE Breite (0x2E062) fuer beide Normen: NTSC-Breite != PAL-
+  Breite -> NTSC ohne RC-Erweiterung (so alle bisherigen 528er-Builds). Gleiche Breite
+  fuer beide -> NTSC bekommt die RC-Erweiterung wieder (Emulation: Kette vollstaendig).
+MG-Handbuch zur Groesse: DecimationH/V 1..16 = Teiler (auf Vielfache von 16), > 16 =
+Zielgroesse in Pixeln, muss kleiner als die Quelle sein. Senkrecht bei Zeilensprung ohne
+INT_TO_PROG_SCALE (setzt der ColdFire nicht): Ergebnis offen, ungeprueft.
+Datenblatt: Video 64 kbit/s..10 Mbit/s, Audio 8..384 kbit/s, GOP 1..unendlich.
+
+ABTASTRATE - GEPRUEFT 20.10. 23:25 (VID00011, 528/4500/96/32000/rein): KEIN HEBEL
+Ergebnis: Kopfangaben stimmen (stsd/mdhd/AAC-Konfig 32000, Index 5 - der ColdFire leitet den
+AAC-Konfigbyte aus dem Wert ab), aber der 256*fs-Audiotakt kommt von aussen und bleibt bei
+48 kHz. Der MG bekommt 1,5x mehr Abtastwerte als eingestellt: Ton 1,5x zu langsam (Korrelation
+mit der Schleife 0,47 bei 1,5x-Annahme gegen 0,14), Tonpfad ab 4 s tot (Bloecke ~370 Byte),
+8 Muell-Eintraege in der Audio-Groessentabelle (bis 1,7 GB). Und der MG reisst das Video mit:
+von der ersten Sekunde an 50 % der Bilder leer/klein/Teilbild, 635 Bitstromfehler, 23 s Bilder
+fehlen (mdhd 156,8 s gegen stts 133,4 s). Abtastrate bleibt waehlbar, ist aber erledigt.
+Nebenbefund: 12 KB/s Ton in Bloecken von ~370 Byte (31/s) stirbt wie 512-Byte-Bloecke (47/s);
+256-Byte-Bloecke (47/s) halten. Die Blockgroesse ist der Killer, nicht Bytes/s - mit dem
+Vorbehalt, dass der MG hier gleichzeitig ueberlief. Direkte Groessenprobe ohne Nebenwirkung:
+48 kHz mit 112 kbit/s (~300 Byte) und 128 (~340 Byte).
+
+ABTASTRATE (build_ai.py abtastrate=32000, Baukasten 1.4 Experte) - Herleitung vor dem Test
+Drei Stellen mit 48000, alle schon im Original, werden gemeinsam gesetzt:
+  0x0C67A  MG Objekt 1 Param 7 = Q_SYS_CFG_AUDIO_SAMPLE_RATE (CF-Modell: nur dieser Parameter aendert sich)
+  0x1AA9E  Host-Konfiguration: Wert geht in eine RAM-Struktur, die der Aufzeichnungsablauf kopiert
+           (externe Analyse der Hersteller-Disassemblierung, 20.10.)
+  0x2AA0C  mp4a-Vorlage des MP4-Schreibers (0x40, 0x40, 48000, 2 Kanaele) - daraus stsd/mp4a
+Offen: (1) Der 256*fs-Audiotakt kommt laut MG-Handbuch von aussen (Host-CPU oder ADC). Bleibt er
+bei 48 kHz, nimmt der MG 48000 Abtastwerte/s und nennt sie 32000: Ton 1,5x zu langsam und zu tief,
+Tonspur 1,5x so lang wie das Video. (2) Ob der ColdFire den AAC-Konfigbyte (Index 3 = 48000)
+aus der Vorlage ableitet oder fest schreibt. pvt_check v1.5 zeigt beides: Zeile "Abtastrate: stsd,
+mdhd, AAC-Konfig" und die 1,5x-Signatur. mp4_abtastrate.py gleicht die Kopfangaben einer
+Aufnahme nachtraeglich an (ohne Neukodierung), falls nur die AAC-Konfig falsch ist.
+Nutzen, wenn es geht: gleiche kbit/s mit 1,5x groesseren, aber 1,5x selteneren AAC-Bloecken
+(32000 + 64: 256 Byte, 31/s statt 47/s) - trennt im Tonpfad-Problem Blockgroesse von Blockrate.
+Test: 2 min LED1 mit Schleifenton, dann pvt_check + ton_schleife (Periode 12,168 s = Takt stimmt,
+18,25 s = Takt blieb bei 48 kHz).
+
+RATENREGELUNG DES MG (build_ai.py rc7= rc11= rc9= rc10= rc12=, Baukasten 1.5) - 21.10. 07:30
+Befund 20./21.10.: ohne Ton lief 5,25 Mbit/s 60 s sauber (VID00012), 6000 und 8000 springen
+gleichmaessig ab einem Punkt (Puffer voll) -> Host-Mauer ohne Ton zwischen 5,25 und 6,0.
+Bei 5,25 Mittel hatte das staerkste 1-s-Fenster 6,65 Mbit/s: AE/LED1 laeuft nur mit der
+Groessenregelung (SIZE_ENABLE, Toleranz 25 MBit = +-5 s Video) und darf innerhalb dieser
+Toleranz beliebig weit ueber der Rate liegen. Zwei Hebel, um die Spitzen zu glaetten:
+  rc7=1000     Groessentoleranz = Video x 1000 Bit (= 1 s statt 5 s); kleiner = flacher
+  rc9=1 rc10=1250000 rc12=11250 rc11=1100
+               Puffer-Regelung (Leaky Bucket) fuer LED1: Pufferbits, Startverzoegerung (Ticks),
+               Transferrate = Video x 1100 (= Host-Grenze 5,5 Mbit/s bei 5000). AB lief mit
+               1/1250000/11250 und Transfer 5000000 (geprueft); AE hat sie fuer LED1 abgeschaltet.
+Beispiele:  build ... 528 5000 0 rc7=1000                        -> 3a89c9f4... (14 Byte)
+            build ... 528 5000 0 rc9=1 rc10=2500000 rc12=22500 rc11=1100 rein=1  -> b950a847...
+Emulation: rc7 aendert nur RC-Param 7 (alle LEDs), rc9/10/11/12 die Params 9/10/11/12 von
+LED1 (mit rein auch LED2/3). Wirkung am Geraet ungeprueft - mit nur Video 5000 (oder 5500)
+testen; mp4_reparatur.py danach nicht vergessen.
+
+HASHES (SHA-256)
+AI_528_4500_192      : 091fb10a5c69745a09797b815a00031e81a304b25719e29b6ab6126042eab0e0
+AI_528_4800_192      : fd5e2f3584542146d229ce3d899ff2a50e9b9b8834250e0300771c6535bfca4e
+AI_528_4500_192_P256 : 271938dbd8987439869488e3d3dae20a51ce93b376628e78776019809f61df21
+AE                   : d4ae6a9b99370e57d3c19652e6d0f071323a9f713d6b238462999eaa317c07a7
+Neubau: python3 werkzeug/build_ai.py build 04_RETURN_AE/CFUPDATE.BIN <Ordner> <breite> <video> <audio> [p04]
+Pruefen: python3 werkzeug/build_ai.py check <CFUPDATE.BIN>
+Offline-Gegenprobe (CF-Modell der Uebergabe): werkzeug/pruefe_ai_emulation.py,
+Ergebnisse in werkzeug/emulation_*.txt (PAL: einziger Unterschied DecimationH).

@@ -1,0 +1,20 @@
+==============================================================================
+VID00012_repariert.MP4
+==============================================================================
+Datei:      39.595.285 Byte, Marke 'mobi', moov am Ende
+Video:      avc1 Main, 528x576, 1.509 Bilder, 60,360 s, 5,247 Mbit/s
+            Halbbilder (field_pic) in 1.509 von 1.509 Bildern
+Container:  avc1 528x576, tkhd 528x576 (Anzeigegroesse)
+SPS:        528x576, Pixel 16:11 -> Anzeige 768x576 (1.333:1, 4:3 = 1.333)
+            mdhd Video 60,360 s / stts 60,360 s
+Schluesselbilder: 31, Abstaende 2,00 s
+Videorate je Sekunde (erste 12 s): 4,99 5,24 5,71 5,46 5,62 4,70 4,79 5,74 4,53 5,75 4,87 5,69
+Hoechstes Fenster: 0,2 s = 8,16 Mbit/s, 1 s = 6,65 Mbit/s (Medienzeit, nicht USB)
+QP (Slice): 21..27, Mittel 24,96
+
+Wiederholungen / Aussetzer:
+  leer (alle Makrobloecke uebersprungen): 0
+  sehr klein (< 1000 Byte):              0
+  Teilbild (< 40 % des Medians):          0
+  ('leer' = exakte Wiederholung; 'sehr klein'/'Teilbild' = Verdacht, nur in bewegtem Umfeld)
+  keine

@@ -1,0 +1,172 @@
+<header>
+  <span class="pill">Pinnacle Video Transfer · ColdFire 01.00.46.03</span>
+  <h1>PVT Firmware-Baukasten</h1>
+  <p class="lede">Original-Update laden, Einstellungen wählen, fertiges Update-Paket speichern. Alles passiert in diesem Browserfenster; die Firmware verlässt deinen Rechner nicht. Basis ist immer der geprüfte Stand AE, geändert werden nur Zahlenwerte an bekannten Stellen.</p>
+</header>
+<main>
+  <section class="step" id="s1">
+    <h2><span class="n">1</span>Firmware laden</h2>
+    <div class="drop" id="drop">
+      <p><strong>Original-Update-ZIP hierher ziehen</strong> (z.&nbsp;B. <code>PVT1.00.46.03.zip</code>), ein Projekt-Paket oder eine einzelne <code>CFUPDATE.BIN</code>.</p>
+      <label class="filebtn btn">Datei auswählen …<input type="file" id="file" accept=".zip,.bin,.BIN,application/zip,application/octet-stream"></label>
+    </div>
+    <div id="ident" hidden></div>
+  </section>
+
+  <section class="step" id="s2">
+    <h2><span class="n">2</span>Einstellungen</h2>
+    <div class="presets" id="presets">
+      <button class="btn sm" type="button" data-preset="ae">AE (Vorführstand)</button>
+      <button class="btn sm" type="button" data-preset="ton96">Mit Ton: 528 · 4500 · Ton 96 (geprüft 20.10.)</button>
+      <button class="btn sm" type="button" data-preset="ton64">Mit Ton, Reserve: 528 · 4500 · Ton 64</button>
+      <button class="btn sm" type="button" data-preset="ai528">AI-Test: 528 · 4800 · Ton 192</button>
+      <button class="btn sm" type="button" data-preset="nurvideo">Nur Video: AE ohne Ton (1 Byte, ungeprüft)</button>
+      <button class="btn sm" type="button" data-preset="rein">AE rein (alle LEDs wie LED1)</button>
+    </div>
+    <form id="form" autocomplete="off">
+      <div class="grid">
+        <div class="field">
+          <label for="video">Videoziel (kbit/s)</label>
+          <input type="number" id="video" list="dl-video" min="1" step="1" value="5000">
+          <datalist id="dl-video"><option value="3600"><option value="4200"><option value="4500"><option value="4800"><option value="5000"><option value="6000"><option value="8000"><option value="10000"></datalist>
+          <div class="hint">Frei wählbar. AE: 5000 (ohne Ton 5 h bewährt). Gemessene Host-Mauer 5,25 Mbit/s Summe; mit echtem Ton kippte 5000 + 96, 4500 + 96 hielt. MG-Datenblatt: 64 kbit/s bis 10 Mbit/s. Unter 3600 setzt der ColdFire MG-Param 10 auf 1 statt 2 (anderer Encoder-Modus wie die Original-Stufen).</div>
+        </div>
+        <div class="field">
+          <label for="audio">Audio (kbit/s AAC, 0 = aus)</label>
+          <input type="number" id="audio" list="dl-audio" min="0" step="1" value="384">
+          <datalist id="dl-audio"><option value="0"><option value="8"><option value="16"><option value="24"><option value="32"><option value="48"><option value="64"><option value="80"><option value="96"><option value="112"><option value="128"><option value="160"><option value="192"><option value="256"><option value="320"><option value="384"></datalist>
+          <div class="hint">Frei wählbar, MG-Datenblatt 8–384. Gemessen 20.10.: 384 und 192 (Blöcke ≥ 450 Byte) töten den Tonpfad binnen 20 s, 96 hält (4500 + 96: 99 % Ton). 0 = nur Video (ein Byte): geprüft 20.10., Aufnahme makellos bei 5,25 Mbit/s, aber der Index wird unvollständig geschrieben – Datei mit mp4_reparatur.py reparieren.</div>
+        </div>
+        <div class="field">
+          <label for="width">Bildbreite PAL (Pixel)</label>
+          <input type="number" id="width" list="dl-width" min="1" step="1" value="720">
+          <datalist id="dl-width"><option value="720"><option value="704"><option value="640"><option value="576"><option value="544"><option value="528"><option value="512"><option value="480"><option value="352"></datalist>
+          <div class="hint">Frei wählbar. Der MG skaliert waagerecht auf diese Breite (Crop bleibt 720). 528 am Gerät bestätigt (VID00007/08/10, Seitenverhältnis stimmt). Vielfache von 16 sind sicher; 1–16 würde der MG als Teiler lesen (2 = 352); mehr als 720 kann er nicht.</div>
+        </div>
+        <div class="field">
+          <label for="height">Bildhöhe PAL (Zeilen)</label>
+          <input type="number" id="height" list="dl-height" min="1" step="1" value="576">
+          <datalist id="dl-height"><option value="576"><option value="480"><option value="432"><option value="384"><option value="288"><option value="240"></datalist>
+          <div class="hint">576 = volle Höhe mit Halbbildern (AE). Kleinere Werte skaliert der MG senkrecht (Param DecimationV). Ungeprüft: bei Zeilensprung-Quelle ohne Halbbild-Verwurf ist das Ergebnis offen; die Original-Stufe LED1 machte 320×240 aus 576i, der Weg ist gangbar.</div>
+        </div>
+        <div class="field">
+          <label for="p04">MG-Audiopuffer p04 (Seiten à 2 KB)</label>
+          <input type="number" id="p04" list="dl-p04" min="1" step="1" value="48">
+          <datalist id="dl-p04"><option value="48"><option value="96"><option value="128"><option value="192"><option value="256"></datalist>
+          <div class="hint">AE: 48 (96 KB). Nur wenn Ton trotz gesenkter Summe abbricht. Emulation: 256 Seiten passen in den MG-Speicher (5025 von 5120 Seiten belegt).</div>
+        </div>
+        <div class="field check">
+          <input type="checkbox" id="rein">
+          <label for="rein">LED2 und LED3 wie LED1 (AE rein)<div class="hint">Alle drei MODE-Stufen bekommen die LED1-Regelung. LED1 bleibt byteidentisch mit AE.</div></label>
+        </div>
+      </div>
+      <details class="expert" id="expert">
+        <summary>Experte: NTSC-Bildgröße, Videopuffer, GOP, Abtastrate, Rauschfilter (TF)</summary>
+        <div class="grid">
+          <div class="field">
+            <label>NTSC-Bildgröße Breite × Höhe</label>
+            <div class="tfrow"><input type="number" id="widthN" min="1" step="1" value="720" aria-label="NTSC Breite"><input type="number" id="heightN" min="1" step="1" value="480" aria-label="NTSC Höhe"></div>
+            <div class="hint">Nur bei NTSC-Quelle wirksam. Die RC-Erweiterung prüft eine gemeinsame Breite: weicht die NTSC-Breite von der PAL-Breite ab, läuft NTSC ohne RC-Erweiterung (so waren alle bisherigen 528er-Builds).</div>
+          </div>
+          <div class="field">
+            <label for="p03">MG-Videopuffer p03 (Seiten à 2 KB)</label>
+            <input type="number" id="p03" list="dl-p03" min="1" step="1" value="2048">
+            <datalist id="dl-p03"><option value="2048"><option value="1536"><option value="1024"><option value="832"></datalist>
+            <div class="hint">AE: 2048 (4 MB). AB lief mit 832. Speicherplan: p03 + p04 bis 2304 Seiten passen nachweislich.</div>
+          </div>
+          <div class="field">
+            <label>GOP-Länge (Bilder) LED1 · LED2 · LED3</label>
+            <div class="tfrow"><input type="number" id="gop1" min="1" step="1" value="50" aria-label="GOP LED1"><input type="number" id="gop2" min="1" step="1" value="50" aria-label="GOP LED2"><input type="number" id="gop3" min="1" step="1" value="50" aria-label="GOP LED3"></div>
+            <div class="hint">I-Bild-Abstand (MG Param 24). Original 60, AE 50, MG-Standard 15, 1 = nur I-Bilder. Gemessen: I-Bilder sind 4 % der Bits, GOP ändern spart 1–2 %.</div>
+          </div>
+          <div class="field">
+            <label for="srate">Abtastrate Ton (Hz)</label>
+            <input type="number" id="srate" list="dl-srate" min="1" step="1" value="48000">
+            <datalist id="dl-srate"><option value="48000"><option value="32000"><option value="24000"></datalist>
+            <div class="hint">AE: 48000. Geprüft 20.10. (VID00011): der Audiotakt kommt von außen und bleibt bei 48 kHz – mit 32000 läuft der MG über, Video zu 50 % kaputt, Ton 1,5× zu langsam und ab 4 s tot. Die drei Kopfstellen schreibt der ColdFire richtig. Kein Hebel; bleibt nur für Versuche wählbar.</div>
+          </div>
+          <div class="field">
+            <label>Rauschfilter TF LED1 · LED2 · LED3</label>
+            <div class="tfrow"><input type="number" id="tf1" min="0" max="127" step="1" value="3" aria-label="TF LED1"><input type="number" id="tf2" min="0" max="127" step="1" value="3" aria-label="TF LED2"><input type="number" id="tf3" min="0" max="127" step="1" value="3" aria-label="TF LED3"></div>
+            <div class="hint">AE: 3/3/3. Im VHS-Vergleich glättete TF3 am stärksten; niedrigere Stufen lassen mehr Rauschen durch und kosten Bits. Bekannt sind 0–3, das Byte fasst bis 127.</div>
+          </div>
+        </div>
+      </details>
+      <details class="expert" id="rcx">
+        <summary>Ratenregelung des MG: Größentoleranz, Puffer-Regelung (Leaky Bucket)</summary>
+        <div class="grid">
+          <div class="field">
+            <label for="rc7f">Größentoleranz RC7 (Faktor × Video, Bit)</label>
+            <input type="number" id="rc7f" list="dl-rc7f" min="1" step="1" value="5000">
+            <datalist id="dl-rc7f"><option value="5000"><option value="2000"><option value="1000"><option value="500"><option value="250"></datalist>
+            <div class="hint">AE: ×5000 = 25 MBit bei 5000 = ±5 s Video. MG-Handbuch: die Dateigröße bleibt Soll ± diese Toleranz; der MG darf innerhalb dieser Toleranz beliebig weit über der Rate liegen – daher die Spitzen (VID00012: 6,65 Mbit/s im 1-s-Fenster bei 5,25 Mittel). Kleiner = flacher.</div>
+          </div>
+          <div class="field">
+            <label for="rc11f">Transferrate RC11 (Faktor × Video, Bit/s)</label>
+            <input type="number" id="rc11f" list="dl-rc11f" min="1" step="1" value="1000">
+            <datalist id="dl-rc11f"><option value="1000"><option value="1100"><option value="1200"></datalist>
+            <div class="hint">AE: ×1000 = gleich dem Videoziel. Abflussrate des Leaky-Bucket; wirkt nur mit Puffer-Regelung. Für den USB-Pfad wäre die gemessene Host-Grenze der sinnvolle Wert (z. B. 5000 × 1100 = 5,5 Mbit/s).</div>
+          </div>
+          <div class="field check">
+            <input type="checkbox" id="rc9">
+            <label for="rc9">Puffer-Regelung RC9 für LED1 einschalten<div class="hint">AE: LED1 aus (nur Größenregelung), LED2/LED3 an. AB lief mit Puffer-Regelung auf LED1 (1,25 MBit, 5 Mbit/s, 125 ms) – geprüft. Damit hält der MG die Rate über das Pufferfenster unter der Transferrate: das Modell für einen begrenzten Kanal.</div></label>
+          </div>
+          <div class="field">
+            <label>Pufferbits RC10 · Startverzögerung RC12 (90-kHz-Ticks)</label>
+            <div class="tfrow"><input type="number" id="rc10" min="1" step="1" value="1250000" aria-label="RC10 Pufferbits"><input type="number" id="rc12" min="0" step="1" value="11250" aria-label="RC12 Startverzögerung"></div>
+            <div class="hint">AE LED1: 1.250.000 Bit (0,25 s bei 5 Mbit/s) und 11.250 Ticks (125 ms). LED2: 5 MBit / 45.000, LED3: 10 MBit / 90.000. Nur wirksam mit Puffer-Regelung.</div>
+          </div>
+        </div>
+        <p class="small muted mono" id="rcInfo" style="margin-top:10px"></p>
+      </details>
+    </form>
+    <div class="sum">
+      <div class="top"><div><strong>Summe Video + Ton</strong> <span class="muted small">(Anforderung an den MG)</span></div><div class="val" id="sumVal">5,38 Mbit/s</div></div>
+      <div class="bar"><div class="fill" id="sumFill"></div><div class="mark" id="markOk" title="bewährt: 5,05"></div><div class="mark" id="markWall" title="Mauer: 5,25"></div></div>
+      <div class="ticks" id="ticks"></div>
+      <ul class="notes" id="notes"></ul>
+    </div>
+  </section>
+
+  <section class="step" id="s3">
+    <h2><span class="n">3</span>Bauen und speichern</h2>
+    <div class="actions">
+      <button class="btn primary" type="button" id="build" disabled>Firmware bauen</button>
+      <span class="muted small" id="buildHint">Zuerst oben eine Firmware laden.</span>
+    </div>
+    <div class="result" id="result" hidden></div>
+  </section>
+
+  <section class="step" id="help">
+    <h2>Einspielen</h2>
+    <ol class="steps">
+      <li>ZIP entpacken. Aus dem Ordner <code>01_INSTALL_…</code> <strong>nur</strong> die <code>CFUPDATE.BIN</code> ins Hauptverzeichnis eines leeren FAT32-Sticks kopieren. Keine zweite BIN, keine MGUPDATE.BIN, keine alten custom.txt/best.txt.</li>
+      <li>PVT ausschalten, Netzteil und alle Geräte trennen. Stick einstecken, dann Netzteil anschließen. Das PVT startet selbst.</li>
+      <li>USB-LED rot, MODE-LEDs blau blinkend: Update läuft. Weder Netzteil noch Stick trennen.</li>
+      <li>Alle LEDs blinken blau, dann Standby. Mit kurzem MODE-Druck einschalten; Stick erst entfernen, wenn die USB-LED blau leuchtet.</li>
+      <li>Erste Aufnahme 1–2 min auf LED1, mit <code>pvt_check.py</code> prüfen: leer = 0, Ton minus Video unter 0,2 s. Freigabe für lange Läufe erst nach 30 min mit Ton und einem 4-GiB-Wechsel.</li>
+    </ol>
+    <details class="help">
+      <summary>Was der Baukasten genau ändert</summary>
+      <p>Das Original wird über eine eingebaute Byte-Differenz (29 Bereiche, 3293 Byte) zum Stand AE und per SHA-256 geprüft. Jede Einstellung ist ein Zahlenwert an bekannten Stellen; vor jedem Wert wird das erwartete Befehlswort geprüft (<code>move.l #</code>, <code>cmpi.l #</code> oder <code>moveq</code>). Es wird kein Code hinzugefügt und nichts anderes berührt. Seit 1.3 sperrt der Baukasten nur noch, was technisch nicht in die Stellen passt (ganze Zahlen, 32 Bit, moveq-Byte); alles andere sind Hinweise.</p>
+      <ul class="notes">
+        <li>Videoziel: <code>0x08108</code>, <code>0x2C002</code>; dazu RC7 = Video×Faktor (AE 5000) und RC11 = Video×Faktor (AE 1000) in allen drei LED-Blöcken; Puffer-Regelung RC9/RC10/RC12 von LED1 ab <code>0x2E11E</code> (Abstand 0x22).</li>
+        <li>Audio-Anforderung: <code>0x2B324</code> (MG-Objekt 3, Opcode 41, ×1000). „aus“: <code>0x0C363</code> (<code>moveq</code>) 1 → 2 = MG ENC_INPUT_SELECT/ENC_AV_SELECT VIDEO_ONLY, Anforderung bleibt unberührt.</li>
+        <li>Bildgröße PAL: Breite <code>0x2B228</code> (Wahl → MG DecimationH) mit den Prüfungen <code>0x0C13C</code> (D1-Vergleich, Pixelformat), <code>0x2B044</code> (Encoder-Erweiterung), <code>0x2E062</code> (RC-Erweiterung, gilt auch für NTSC); Höhe <code>0x2B234</code> (→ DecimationV) mit <code>0x2B052</code>, <code>0x2E056</code>. Crop bleibt 720×576, der MG skaliert.</li>
+        <li>Bildgröße NTSC: Breite <code>0x2B81E</code>, <code>0x0C042</code>, <code>0x2B924</code>; Höhe <code>0x2B82A</code>, <code>0x2B932</code>, <code>0x2E044</code>.</li>
+        <li>GOP je LED: <code>0x2C086</code>, <code>0x2C090</code>, <code>0x2C09A</code> (MG-Objekt 3, Param 24).</li>
+        <li>Abtastrate: <code>0x0C67A</code> (→ MG Objekt 1, Param 7 AUDIO_SAMPLE_RATE), <code>0x1AA9E</code> (Host-Konfiguration, RAM-Struktur der Aufzeichnung), <code>0x2AA0C</code> (mp4a-Vorlage des MP4-Schreibers). Alle drei im Original vorhanden.</li>
+        <li>MG-Tabelle: Videopuffer p03 bei <code>0x2A626</code>, Audiopuffer p04 bei <code>0x2A62A</code>.</li>
+        <li>AE rein: die sechs RC-Konstanten von LED1 (ab <code>0x2E11E</code>, Abstand 0x22) werden nach LED2 (+0x158) und LED3 (+0x2B0) kopiert.</li>
+        <li>TF-Stufe: die <code>moveq</code>-Werte bei <code>0x2B177</code>, <code>0x2B17D</code>, <code>0x2B183</code>.</li>
+      </ul>
+    </details>
+    <details class="help">
+      <summary>Bekannte Builds und ihr Prüfstand</summary>
+      <div class="tablewrap"><table id="knownTable"><thead><tr><th>Name</th><th>Stand</th><th class="mono">SHA-256 (Anfang)</th></tr></thead><tbody></tbody></table></div>
+    </details>
+  </section>
+</main>
+<footer>
+  <p>Baukasten 1.5 · Stand 21.10.2026, 07:30. Freie Werte, nur technische Sperren. Experimentelle Firmware: jede neue Kombination hat 0 Hardwaretests. Rückkehrdateien (AE und Original) liegen jedem Paket bei. Backups und Dumps behalten.</p>
+</footer>

@@ -1,0 +1,21 @@
+# Firmware-Abbilder und Original-Updates gehoeren nicht ins Repository
+*.BIN
+*.bin
+PVT*.zip
+*.zip
+# Aufnahmen und Messrohdaten
+*.MP4
+*.mp4
+*.mkv
+*.raw
+*.f32
+# Werkzeugreste
+__pycache__/
+*.pyc
+node_modules/
+baukasten/tests/_smoke_out/
+baukasten/dist/pvt_firmware_baukasten_artefakt.html
+# Editoren
+.vscode/
+.idea/
+*~

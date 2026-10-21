@@ -1,0 +1,60 @@
+PVT TEST AI - WARUM 528x576 UND WIE DIE BREITE GEFUNDEN WURDE (20.10.2026)
+
+1. KAMERA (AVC 571, 1/3" Sony-CCD)
+   Sensor 512 x 582 Bildpunkte (PAL), 400 TV-Linien.
+   Die 512 Sensorpunkte liegen auf der aktiven Zeile (52 us = 702 Abtastwerte bei
+   13,5 MHz). Das 720er-Fenster des PVT ist 53,3 us breit. Umgerechnet:
+   512 x 720/702 = 525 -> naechstes Vielfaches von 16 = 528.
+   528 Abtastwerte tragen bis 4,95 MHz; 400 TVL entsprechen ~5,1 MHz.
+   Senkrecht bleibt 576 (zwei Halbbilder a 288), sonst ginge das Interlacing verloren.
+   Seitenverhaeltnis: 16:15 x 720/528 = 16:11 (Standardwert der H.264-VUI) -> 4:3.
+
+2. MESSUNG AN DEINEN AE-CLIPS (VID00001-03, je 40 Bilder, Luma, Zeilenspektrum)
+   Energieanteil oberhalb   3 MHz: 0,4-0,5 %
+                            4 MHz: 0,2 %
+                            5 MHz: 0,09 %
+                            6 MHz: 0,03 %
+   Ab ~5,5 MHz flacher Boden bei -20 dB (gegenueber 1-2 MHz) = Rauschen, kein Bild.
+   Rundweg 720 -> B -> 720 (Lanczos), PSNR gegen das Original:
+     640: 51 dB   544: 46-47 dB   528: 46-47 dB   512: 47-48 dB   480: 44-45 dB
+   Ab ~45 dB ist der Unterschied unsichtbar; ein H.264-Encoder in SD bei 5 Mbit/s
+   liegt typischerweise bei 36-42 dB, verliert also selbst deutlich mehr.
+   Die Breite kostet praktisch nichts, sie spart nur Pixel (-27 %).
+
+3. BITS PRO BILDPUNKT (Nachtrag 12:30: als Qualitaetsmass irrefuehrend, siehe RD_ERGEBNIS.txt -
+   gemessen spart 528 bei gleicher Qualitaet im Kameraband 3-7 %, im Vollband ist es schlechter)
+   AE  720x576 @ 5,0 Mbit/s: 0,482
+   AI  528x576 @ 4,5 Mbit/s: 0,592 (+23 %)   Summe mit Ton 192: 4,69 Mbit/s (89 % der Mauer)
+   AI  528x576 @ 4,8 Mbit/s: 0,631 (+31 %)   Summe mit Ton 192: 4,99 Mbit/s (95 %)
+
+4. MG1264 (Mobilygen-Handbuch + MG-Code)
+   Video-In-Parameter (Wortindex = Parameternummer, aus der MG-Konfigurationsausgabe):
+   0 Norm, 1/2 Crop-Breite/-Hoehe, 3/4 Crop-Start, 5 DecimationH, 6 DecimationV,
+   9 ProgressiveSrc, 10 TF Level, 25/26 Pixel-AR X/Y, 27 Fixed Pixel AR, 28/30 Ticks.
+   DecimationH > 16 = Zielbreite in Bildpunkten (Handbuch S. 214). Der MG berechnet
+   die Schrittweite fuer jedes Verhaeltnis. Eigene Filtertabellen hat er nur fuer
+   1:1, 720->640, 2:1 und 4:1; bei 720->528 nimmt er seine Interpolationstabelle
+   ohne zusaetzlichen Tiefpass und schreibt auf seine Debug-Schnittstelle
+   "unsupported horizontal decimation 720 -> 528". Bei 5-MHz-Material ohne Inhalt
+   darueber ist kein sichtbares Aliasing zu erwarten. Faellt doch Moire auf
+   (feine Streifen), ist 640 die Ausweichbreite mit eigener Tabelle.
+   Pixel-AR 16:15 bleibt "nicht fest" -> der MG rechnet das Seitenverhaeltnis in
+   der VUI selbst auf die neue Breite um (Handbuch S. 216).
+
+5. COLDFIRE: NUR ZAHLEN, GEFUNDEN PER BLACKBOX
+   Die Breite steht nicht in der Tabelle bei 0x2A43E (die ist fuer custom.txt).
+   Gefunden durch Mutationstest mit dem CF-Konfigurationsmodell der Uebergabe:
+   jede 720 im AE-Abbild einzeln auf 544 gesetzt, Konfigurationskette ausgefuehrt,
+   MG-Befehle verglichen (sel.py, chain.py, mut.py, mut2.py; kein Disassemblat).
+   - 0x2B228 (move.l #720): waehlt die Breite -> MG-Param 5.
+     Allein geaendert kippt die Kette in den Nicht-D1-Pfad: progressiv,
+     quadratische Pixel fest 1:1, TF/Deblocking/RC-Erweiterungen fallen weg.
+   - 0x0C13C, 0x2B044, 0x2E062 (je cmpi.l #720): die Breitenpruefungen des nativen
+     D1-Pfads, der Encoder- und der RC-Erweiterung.
+   Alle vier zusammen: PAL LED1-3 identisch zu AE bis auf DecimationH 720 -> Breite.
+   NTSC behaelt 720x480, verliert aber die RC-Erweiterung (gemeinsame Pruefung).
+
+6. OFFEN (NUR AM GERAET ZU KLAEREN)
+   - Skaliert der MG wirklich auf 528 (volles 4:3-Bild) oder schneidet/rahmt er?
+   - Schreibt der ColdFire 528 auch in tkhd/avc1 des MP4?
+   - Wie verhaelt sich der Datenweg mit echtem Ton bei 4,69 bzw. 4,99 Mbit/s?

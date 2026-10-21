@@ -1,0 +1,46 @@
+Quelle  Breite  kbit/s | voll: PSNR-Y  SSIM-Y | Band<=4,95MHz: PSNR-Y  SSIM-Y | 720er-Rate gleicher Qualitaet (Band, PSNR/SSIM)
+srcA   720   4000 |  43.28  0.9801 |  43.94  0.9819 | 
+srcA   720   4500 |  43.70  0.9818 |  44.37  0.9834 | 
+srcA   720   5000 |  44.12  0.9832 |  44.80  0.9848 | 
+srcA   528   3000 |  41.75  0.9750 |  42.94  0.9782 |  2858 /  2779
+srcA   528   3500 |  42.14  0.9771 |  43.45  0.9803 |  3441 /  3485
+srcA   528   4000 |  42.50  0.9790 |  43.93  0.9822 |  3991 /  4103
+srcA   528   4500 |  42.83  0.9806 |  44.38  0.9838 |  4506 /  4650
+srcA   528   5000 |  43.13  0.9821 |  44.80  0.9852 |  5008 /  5164
+srcB   720   4000 |  44.40  0.9816 |  44.97  0.9832 | 
+srcB   720   4500 |  44.79  0.9831 |  45.37  0.9845 | 
+srcB   720   5000 |  45.17  0.9843 |  45.75  0.9857 | 
+srcB   528   3000 |  42.87  0.9771 |  44.05  0.9800 |  2840 /  2835
+srcB   528   3500 |  43.22  0.9789 |  44.51  0.9818 |  3414 /  3510
+srcB   528   4000 |  43.54  0.9805 |  44.93  0.9834 |  3951 /  4105
+srcB   528   4500 |  43.83  0.9819 |  45.33  0.9848 |  4448 /  4635
+srcB   528   5000 |  44.09  0.9831 |  45.69  0.9860 |  4921 /  5135
+
+ACHTUNG, Verzerrung der Tabelle oben: die Quelle ist eine MG-Aufnahme (H.264, 5 Mbit/s).
+Beim Neukodieren in 720 liegt das Makroblock-/Transformraster auf dem alten Raster und
+kodiert sich billiger; die Skalierung auf 528 zerstoert das Raster. Das bevorzugt 720.
+
+KONTROLLE (ctl.sh): Quelle um 2 Pixel und 2 Zeilen verschoben (crop 718x574 ab 2/2, pad),
+damit beide Wege ohne Rastervorteil antreten. Gleiche Werkzeuge, gleiche Messung.
+Quelle Breite kbit/s | Vollband PSNR/SSIM | Band<=4,95MHz PSNR/SSIM | 720er-Rate gleicher Qualitaet (Band-PSNR / Band-SSIM)
+srcA  720  4000 |  43.13 0.9791 |  43.86 0.9813 |
+srcA  720  4500 |  43.52 0.9807 |  44.27 0.9828 |
+srcA  720  5000 |  43.91 0.9821 |  44.66 0.9841 |
+srcA  528  3500 |  42.13 0.9772 |  43.48 0.9802 |  3545 / 3624
+srcA  528  4000 |  42.48 0.9791 |  43.96 0.9820 |  4121 / 4248
+srcA  528  4500 |  42.81 0.9808 |  44.41 0.9837 |  4684 / 4844
+srcA  528  5000 |  43.11 0.9822 |  44.84 0.9851 |  5227 / 5384
+srcB  720  4000 |  44.26 0.9807 |  44.90 0.9827 |
+srcB  720  4500 |  44.62 0.9821 |  45.27 0.9839 |
+srcB  720  5000 |  44.97 0.9834 |  45.62 0.9851 |
+srcB  528  3500 |  43.32 0.9790 |  44.53 0.9817 |  3500 / 3623
+srcB  528  4000 |  43.65 0.9806 |  44.95 0.9833 |  4075 / 4253
+srcB  528  4500 |  43.94 0.9820 |  45.35 0.9847 |  4612 / 4828
+srcB  528  5000 |  44.21 0.9832 |  45.71 0.9859 |  5137 / 5361
+Gleiche Band-Qualitaet wie 720 @ 5000 braucht bei 528: srcA 4640-4790, srcB 4660-4870 kbit/s.
+ERGEBNIS: Ersparnis durch 528 bei gleicher Qualitaet im Kameraband 3-7 % (ca. 150-350 kbit/s),
+nicht 27 % wie die Pixelzahl nahelegt. Vollband (mit dem Rauschboden > 5 MHz) bleibt 528 schlechter.
+Bit-Anteile in den AE-Clips: I-Bilder nur 4 % aller Bits (GOP 50), P-Bilder halb so gross wie
+I-Bilder -> die Bits gehen in Bewegung (Laub im Wind) und Rauschen, nicht in die Spaltenzahl.
+Laengere GOP spart hier nur 1-2 %.
+

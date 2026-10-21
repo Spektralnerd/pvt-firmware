@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PVT Firmware-Baukasten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: ein Werkzeug in drei nummerierten Schritten (Laden → Einstellen → Bauen), eine Spalte, Daten in Mono. */
+:root {
+  --bg: #eef1f5; --surface: #ffffff; --surface-2: #f6f8fb; --fg: #16202b; --muted: #5d6978; --line: #d3dae3;
+  --accent: #1d5fd6; --accent-ink: #ffffff; --accent-soft: #e4ecfb;
+  --ok: #1f8a4c; --ok-soft: #e3f3e9; --warn: #a86a0f; --warn-soft: #fbefd7; --bad: #c2382b; --bad-soft: #fbe5e2;
+  --code-bg: #eaf0fa; --shadow: 0 1px 2px rgba(22,32,43,.06), 0 8px 24px rgba(22,32,43,.06);
+  --sans: "Schibsted Grotesk", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f141b; --surface: #171e27; --surface-2: #1d2631; --fg: #e5ebf3; --muted: #9aa7b6; --line: #2b3643;
+  --accent: #6b98ff; --accent-ink: #0b1220; --accent-soft: #1b2a45;
+  --ok: #46bd78; --ok-soft: #15301f; --warn: #e3ac45; --warn-soft: #3a2b0f; --bad: #ef6a5c; --bad-soft: #3d1a16;
+  --code-bg: #1a2432; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #171e27; --surface-2: #1d2631; --fg: #e5ebf3; --muted: #9aa7b6; --line: #2b3643;
+  --accent: #6b98ff; --accent-ink: #0b1220; --accent-soft: #1b2a45;
+  --ok: #46bd78; --ok-soft: #15301f; --warn: #e3ac45; --warn-soft: #3a2b0f; --bad: #ef6a5c; --bad-soft: #3d1a16;
+  --code-bg: #1a2432; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35); color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+main, header, footer { max-width: 900px; margin-inline: auto; }
+header { padding-block: 32px 8px; }
+h1 { font-size: clamp(26px, 4vw, 34px); font-weight: 700; letter-spacing: -.01em; margin: 0 0 6px; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 62ch; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+h2 { font-size: 19px; font-weight: 600; margin: 0; display: flex; align-items: baseline; gap: 12px; }
+h2 .n { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
+section.step { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 20px; margin-top: 18px; }
+section.step > h2 { margin-bottom: 12px; }
+p { margin: 0 0 10px; }
+.muted { color: var(--muted); }
+small, .small { font-size: 13px; }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.hash { font-family: var(--mono); font-size: 12px; word-break: break-all; background: var(--code-bg); padding: 6px 8px; border-radius: 6px; display: block; }
+
+/* Schritt 1 */
+.drop { border: 2px dashed var(--line); border-radius: 10px; padding: 26px 18px; text-align: center; background: var(--surface-2); transition: border-color .15s, background .15s; }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop p { margin: 0 0 10px; }
+.filebtn { display: inline-block; }
+.filebtn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.btn { font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, .filebtn:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.sm { padding: 5px 10px; font-size: 13px; font-weight: 500; }
+.status { border-radius: 8px; padding: 12px 14px; border: 1px solid var(--line); margin-top: 14px; }
+.status.ok { background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.status.warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+.status.bad { background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
+.status strong { display: block; margin-bottom: 4px; }
+.entries { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
+.entries label { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; background: var(--surface); }
+.entries label.sel { border-color: var(--accent); background: var(--accent-soft); }
+.entries input { margin-top: 4px; }
+.entries label > span { min-width: 0; overflow-wrap: anywhere; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin-top: 10px; font-size: 14px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; font-family: var(--mono); font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+
+/* Schritt 2 */
+.presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px 18px; }
+.field label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.field .hint { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.field input[type=number], .field select { font: inherit; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); font-variant-numeric: tabular-nums; }
+.check { display: flex; gap: 10px; align-items: flex-start; }
+.check input { margin-top: 5px; width: 16px; height: 16px; }
+.tfrow { display: flex; gap: 8px; } .tfrow select, .tfrow input { flex: 1; min-width: 0; }
+details.expert { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+details.expert summary { cursor: pointer; font-weight: 600; }
+details.expert .grid { margin-top: 12px; }
+.sum { margin-top: 18px; padding: 14px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
+.sum .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.sum .val { font-family: var(--mono); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bar { position: relative; height: 12px; border-radius: 6px; background: var(--line); margin: 10px 0 6px; overflow: hidden; }
+.bar .fill { height: 100%; width: 0; background: var(--ok); transition: width .2s; }
+.bar .fill.warn { background: var(--warn); } .bar .fill.bad { background: var(--bad); }
+.bar .mark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--fg); opacity: .6; }
+.ticks { position: relative; height: 18px; font-size: 12px; color: var(--muted); font-family: var(--mono); } .ticks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; } .ticks span.first { transform: none; } .ticks span.last { transform: translateX(-100%); } .ticks span.wall { color: var(--bad); }
+.notes { margin: 10px 0 0; padding-left: 18px; font-size: 14px; } .notes li { margin: 3px 0; }
+.notes li.bad { color: var(--bad); } .notes li.warn { color: var(--warn); }
+
+/* Schritt 3 */
+.result { margin-top: 14px; }
+.result .head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
+.result .label { font-family: var(--mono); font-size: 18px; font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
+.badge.ok { background: var(--ok-soft); color: var(--ok); } .badge.warn { background: var(--warn-soft); color: var(--warn); } .badge.bad { background: var(--bad-soft); color: var(--bad); }
+.tablewrap { overflow-x: auto; margin-top: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+td.mono, th.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+.actions .btn { max-width: 100%; overflow-wrap: anywhere; white-space: normal; text-align: left; }
+#saveMsg { font-size: 14px; }
+
+/* Hilfe */
+ol.steps { padding-left: 20px; } ol.steps li { margin: 6px 0; }
+details.help { margin-top: 10px; } details.help summary { cursor: pointer; font-weight: 600; }
+details.help > *:not(summary) { margin-top: 8px; }
+footer { color: var(--muted); font-size: 13px; padding-top: 24px; }
+@media (prefers-reduced-motion: reduce) { .bar .fill, .drop { transition: none; } }
+</style>
+<style>img{max-width:100%}[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<header>
+  <span class="pill">Pinnacle Video Transfer · ColdFire 01.00.46.03</span>
+  <h1>PVT Firmware-Baukasten</h1>
+  <p class="lede">Original-Update laden, Einstellungen wählen, fertiges Update-Paket speichern. Alles passiert in diesem Browserfenster; die Firmware verlässt deinen Rechner nicht. Basis ist immer der geprüfte Stand AE, geändert werden nur Zahlenwerte an bekannten Stellen.</p>
+</header>
+<main>
+  <section class="step" id="s1">
+    <h2><span class="n">1</span>Firmware laden</h2>
+    <div class="drop" id="drop">
+      <p><strong>Original-Update-ZIP hierher ziehen</strong> (z.&nbsp;B. <code>PVT1.00.46.03.zip</code>), ein Projekt-Paket oder eine einzelne <code>CFUPDATE.BIN</code>.</p>
+      <label class="filebtn btn">Datei auswählen …<input type="file" id="file" accept=".zip,.bin,.BIN,application/zip,application/octet-stream"></label>
+    </div>
+    <div id="ident" hidden></div>
+  </section>
+
+  <section class="step" id="s2">
+    <h2><span class="n">2</span>Einstellungen</h2>
+    <div class="presets" id="presets">
+      <button class="btn sm" type="button" data-preset="ae">AE (Vorführstand)</button>
+      <button class="btn sm" type="button" data-preset="ton96">Mit Ton: 528 · 4500 · Ton 96 (geprüft 20.10.)</button>
+      <button class="btn sm" type="button" data-preset="ton64">Mit Ton, Reserve: 528 · 4500 · Ton 64</button>
+      <button class="btn sm" type="button" data-preset="ai528">AI-Test: 528 · 4800 · Ton 192</button>
+      <button class="btn sm" type="button" data-preset="nurvideo">Nur Video: AE ohne Ton (1 Byte, ungeprüft)</button>
+      <button class="btn sm" type="button" data-preset="rein">AE rein (alle LEDs wie LED1)</button>
+    </div>
+    <form id="form" autocomplete="off">
+      <div class="grid">
+        <div class="field">
+          <label for="video">Videoziel (kbit/s)</label>
+          <input type="number" id="video" list="dl-video" min="1" step="1" value="5000">
+          <datalist id="dl-video"><option value="3600"><option value="4200"><option value="4500"><option value="4800"><option value="5000"><option value="6000"><option value="8000"><option value="10000"></datalist>
+          <div class="hint">Frei wählbar. AE: 5000 (ohne Ton 5 h bewährt). Gemessene Host-Mauer 5,25 Mbit/s Summe; mit echtem Ton kippte 5000 + 96, 4500 + 96 hielt. MG-Datenblatt: 64 kbit/s bis 10 Mbit/s. Unter 3600 setzt der ColdFire MG-Param 10 auf 1 statt 2 (anderer Encoder-Modus wie die Original-Stufen).</div>
+        </div>
+        <div class="field">
+          <label for="audio">Audio (kbit/s AAC, 0 = aus)</label>
+          <input type="number" id="audio" list="dl-audio" min="0" step="1" value="384">
+          <datalist id="dl-audio"><option value="0"><option value="8"><option value="16"><option value="24"><option value="32"><option value="48"><option value="64"><option value="80"><option value="96"><option value="112"><option value="128"><option value="160"><option value="192"><option value="256"><option value="320"><option value="384"></datalist>
+          <div class="hint">Frei wählbar, MG-Datenblatt 8–384. Gemessen 20.10.: 384 und 192 (Blöcke ≥ 450 Byte) töten den Tonpfad binnen 20 s, 96 hält (4500 + 96: 99 % Ton). 0 = nur Video (ein Byte): geprüft 20.10., Aufnahme makellos bei 5,25 Mbit/s, aber der Index wird unvollständig geschrieben – Datei mit mp4_reparatur.py reparieren.</div>
+        </div>
+        <div class="field">
+          <label for="width">Bildbreite PAL (Pixel)</label>
+          <input type="number" id="width" list="dl-width" min="1" step="1" value="720">
+          <datalist id="dl-width"><option value="720"><option value="704"><option value="640"><option value="576"><option value="544"><option value="528"><option value="512"><option value="480"><option value="352"></datalist>
+          <div class="hint">Frei wählbar. Der MG skaliert waagerecht auf diese Breite (Crop bleibt 720). 528 am Gerät bestätigt (VID00007/08/10, Seitenverhältnis stimmt). Vielfache von 16 sind sicher; 1–16 würde der MG als Teiler lesen (2 = 352); mehr als 720 kann er nicht.</div>
+        </div>
+        <div class="field">
+          <label for="height">Bildhöhe PAL (Zeilen)</label>
+          <input type="number" id="height" list="dl-height" min="1" step="1" value="576">
+          <datalist id="dl-height"><option value="576"><option value="480"><option value="432"><option value="384"><option value="288"><option value="240"></datalist>
+          <div class="hint">576 = volle Höhe mit Halbbildern (AE). Kleinere Werte skaliert der MG senkrecht (Param DecimationV). Ungeprüft: bei Zeilensprung-Quelle ohne Halbbild-Verwurf ist das Ergebnis offen; die Original-Stufe LED1 machte 320×240 aus 576i, der Weg ist gangbar.</div>
+        </div>
+        <div class="field">
+          <label for="p04">MG-Audiopuffer p04 (Seiten à 2 KB)</label>
+          <input type="number" id="p04" list="dl-p04" min="1" step="1" value="48">
+          <datalist id="dl-p04"><option value="48"><option value="96"><option value="128"><option value="192"><option value="256"></datalist>
+          <div class="hint">AE: 48 (96 KB). Nur wenn Ton trotz gesenkter Summe abbricht. Emulation: 256 Seiten passen in den MG-Speicher (5025 von 5120 Seiten belegt).</div>
+        </div>
+        <div class="field check">
+          <input type="checkbox" id="rein">
+          <label for="rein">LED2 und LED3 wie LED1 (AE rein)<div class="hint">Alle drei MODE-Stufen bekommen die LED1-Regelung. LED1 bleibt byteidentisch mit AE.</div></label>
+        </div>
+      </div>
+      <details class="expert" id="expert">
+        <summary>Experte: NTSC-Bildgröße, Videopuffer, GOP, Abtastrate, Rauschfilter (TF)</summary>
+        <div class="grid">
+          <div class="field">
+            <label>NTSC-Bildgröße Breite × Höhe</label>
+            <div class="tfrow"><input type="number" id="widthN" min="1" step="1" value="720" aria-label="NTSC Breite"><input type="number" id="heightN" min="1" step="1" value="480" aria-label="NTSC Höhe"></div>
+            <div class="hint">Nur bei NTSC-Quelle wirksam. Die RC-Erweiterung prüft eine gemeinsame Breite: weicht die NTSC-Breite von der PAL-Breite ab, läuft NTSC ohne RC-Erweiterung (so waren alle bisherigen 528er-Builds).</div>
+          </div>
+          <div class="field">
+            <label for="p03">MG-Videopuffer p03 (Seiten à 2 KB)</label>
+            <input type="number" id="p03" list="dl-p03" min="1" step="1" value="2048">
+            <datalist id="dl-p03"><option value="2048"><option value="1536"><option value="1024"><option value="832"></datalist>
+            <div class="hint">AE: 2048 (4 MB). AB lief mit 832. Speicherplan: p03 + p04 bis 2304 Seiten passen nachweislich.</div>
+          </div>
+          <div class="field">
+            <label>GOP-Länge (Bilder) LED1 · LED2 · LED3</label>
+            <div class="tfrow"><input type="number" id="gop1" min="1" step="1" value="50" aria-label="GOP LED1"><input type="number" id="gop2" min="1" step="1" value="50" aria-label="GOP LED2"><input type="number" id="gop3" min="1" step="1" value="50" aria-label="GOP LED3"></div>
+            <div class="hint">I-Bild-Abstand (MG Param 24). Original 60, AE 50, MG-Standard 15, 1 = nur I-Bilder. Gemessen: I-Bilder sind 4 % der Bits, GOP ändern spart 1–2 %.</div>
+          </div>
+          <div class="field">
+            <label for="srate">Abtastrate Ton (Hz)</label>
+            <input type="number" id="srate" list="dl-srate" min="1" step="1" value="48000">
+            <datalist id="dl-srate"><option value="48000"><option value="32000"><option value="24000"></datalist>
+            <div class="hint">AE: 48000. Geprüft 20.10. (VID00011): der Audiotakt kommt von außen und bleibt bei 48 kHz – mit 32000 läuft der MG über, Video zu 50 % kaputt, Ton 1,5× zu langsam und ab 4 s tot. Die drei Kopfstellen schreibt der ColdFire richtig. Kein Hebel; bleibt nur für Versuche wählbar.</div>
+          </div>
+          <div class="field">
+            <label>Rauschfilter TF LED1 · LED2 · LED3</label>
+            <div class="tfrow"><input type="number" id="tf1" min="0" max="127" step="1" value="3" aria-label="TF LED1"><input type="number" id="tf2" min="0" max="127" step="1" value="3" aria-label="TF LED2"><input type="number" id="tf3" min="0" max="127" step="1" value="3" aria-label="TF LED3"></div>
+            <div class="hint">AE: 3/3/3. Im VHS-Vergleich glättete TF3 am stärksten; niedrigere Stufen lassen mehr Rauschen durch und kosten Bits. Bekannt sind 0–3, das Byte fasst bis 127.</div>
+          </div>
+        </div>
+      </details>
+      <details class="expert" id="rcx">
+        <summary>Ratenregelung des MG: Größentoleranz, Puffer-Regelung (Leaky Bucket)</summary>
+        <div class="grid">
+          <div class="field">
+            <label for="rc7f">Größentoleranz RC7 (Faktor × Video, Bit)</label>
+            <input type="number" id="rc7f" list="dl-rc7f" min="1" step="1" value="5000">
+            <datalist id="dl-rc7f"><option value="5000"><option value="2000"><option value="1000"><option value="500"><option value="250"></datalist>
+            <div class="hint">AE: ×5000 = 25 MBit bei 5000 = ±5 s Video. MG-Handbuch: die Dateigröße bleibt Soll ± diese Toleranz; der MG darf innerhalb dieser Toleranz beliebig weit über der Rate liegen – daher die Spitzen (VID00012: 6,65 Mbit/s im 1-s-Fenster bei 5,25 Mittel). Kleiner = flacher.</div>
+          </div>
+          <div class="field">
+            <label for="rc11f">Transferrate RC11 (Faktor × Video, Bit/s)</label>
+            <input type="number" id="rc11f" list="dl-rc11f" min="1" step="1" value="1000">
+            <datalist id="dl-rc11f"><option value="1000"><option value="1100"><option value="1200"></datalist>
+            <div class="hint">AE: ×1000 = gleich dem Videoziel. Abflussrate des Leaky-Bucket; wirkt nur mit Puffer-Regelung. Für den USB-Pfad wäre die gemessene Host-Grenze der sinnvolle Wert (z. B. 5000 × 1100 = 5,5 Mbit/s).</div>
+          </div>
+          <div class="field check">
+            <input type="checkbox" id="rc9">
+            <label for="rc9">Puffer-Regelung RC9 für LED1 einschalten<div class="hint">AE: LED1 aus (nur Größenregelung), LED2/LED3 an. AB lief mit Puffer-Regelung auf LED1 (1,25 MBit, 5 Mbit/s, 125 ms) – geprüft. Damit hält der MG die Rate über das Pufferfenster unter der Transferrate: das Modell für einen begrenzten Kanal.</div></label>
+          </div>
+          <div class="field">
+            <label>Pufferbits RC10 · Startverzögerung RC12 (90-kHz-Ticks)</label>
+            <div class="tfrow"><input type="number" id="rc10" min="1" step="1" value="1250000" aria-label="RC10 Pufferbits"><input type="number" id="rc12" min="0" step="1" value="11250" aria-label="RC12 Startverzögerung"></div>
+            <div class="hint">AE LED1: 1.250.000 Bit (0,25 s bei 5 Mbit/s) und 11.250 Ticks (125 ms). LED2: 5 MBit / 45.000, LED3: 10 MBit / 90.000. Nur wirksam mit Puffer-Regelung.</div>
+          </div>
+        </div>
+        <p class="small muted mono" id="rcInfo" style="margin-top:10px"></p>
+      </details>
+    </form>
+    <div class="sum">
+      <div class="top"><div><strong>Summe Video + Ton</strong> <span class="muted small">(Anforderung an den MG)</span></div><div class="val" id="sumVal">5,38 Mbit/s</div></div>
+      <div class="bar"><div class="fill" id="sumFill"></div><div class="mark" id="markOk" title="bewährt: 5,05"></div><div class="mark" id="markWall" title="Mauer: 5,25"></div></div>
+      <div class="ticks" id="ticks"></div>
+      <ul class="notes" id="notes"></ul>
+    </div>
+  </section>
+
+  <section class="step" id="s3">
+    <h2><span class="n">3</span>Bauen und speichern</h2>
+    <div class="actions">
+      <button class="btn primary" type="button" id="build" disabled>Firmware bauen</button>
+      <span class="muted small" id="buildHint">Zuerst oben eine Firmware laden.</span>
+    </div>
+    <div class="result" id="result" hidden></div>
+  </section>
+
+  <section class="step" id="help">
+    <h2>Einspielen</h2>
+    <ol class="steps">
+      <li>ZIP entpacken. Aus dem Ordner <code>01_INSTALL_…</code> <strong>nur</strong> die <code>CFUPDATE.BIN</code> ins Hauptverzeichnis eines leeren FAT32-Sticks kopieren. Keine zweite BIN, keine MGUPDATE.BIN, keine alten custom.txt/best.txt.</li>
+      <li>PVT ausschalten, Netzteil und alle Geräte trennen. Stick einstecken, dann Netzteil anschließen. Das PVT startet selbst.</li>
+      <li>USB-LED rot, MODE-LEDs blau blinkend: Update läuft. Weder Netzteil noch Stick trennen.</li>
+      <li>Alle LEDs blinken blau, dann Standby. Mit kurzem MODE-Druck einschalten; Stick erst entfernen, wenn die USB-LED blau leuchtet.</li>
+      <li>Erste Aufnahme 1–2 min auf LED1, mit <code>pvt_check.py</code> prüfen: leer = 0, Ton minus Video unter 0,2 s. Freigabe für lange Läufe erst nach 30 min mit Ton und einem 4-GiB-Wechsel.</li>
+    </ol>
+    <details class="help">
+      <summary>Was der Baukasten genau ändert</summary>
+      <p>Das Original wird über eine eingebaute Byte-Differenz (29 Bereiche, 3293 Byte) zum Stand AE und per SHA-256 geprüft. Jede Einstellung ist ein Zahlenwert an bekannten Stellen; vor jedem Wert wird das erwartete Befehlswort geprüft (<code>move.l #</code>, <code>cmpi.l #</code> oder <code>moveq</code>). Es wird kein Code hinzugefügt und nichts anderes berührt. Seit 1.3 sperrt der Baukasten nur noch, was technisch nicht in die Stellen passt (ganze Zahlen, 32 Bit, moveq-Byte); alles andere sind Hinweise.</p>
+      <ul class="notes">
+        <li>Videoziel: <code>0x08108</code>, <code>0x2C002</code>; dazu RC7 = Video×Faktor (AE 5000) und RC11 = Video×Faktor (AE 1000) in allen drei LED-Blöcken; Puffer-Regelung RC9/RC10/RC12 von LED1 ab <code>0x2E11E</code> (Abstand 0x22).</li>
+        <li>Audio-Anforderung: <code>0x2B324</code> (MG-Objekt 3, Opcode 41, ×1000). „aus“: <code>0x0C363</code> (<code>moveq</code>) 1 → 2 = MG ENC_INPUT_SELECT/ENC_AV_SELECT VIDEO_ONLY, Anforderung bleibt unberührt.</li>
+        <li>Bildgröße PAL: Breite <code>0x2B228</code> (Wahl → MG DecimationH) mit den Prüfungen <code>0x0C13C</code> (D1-Vergleich, Pixelformat), <code>0x2B044</code> (Encoder-Erweiterung), <code>0x2E062</code> (RC-Erweiterung, gilt auch für NTSC); Höhe <code>0x2B234</code> (→ DecimationV) mit <code>0x2B052</code>, <code>0x2E056</code>. Crop bleibt 720×576, der MG skaliert.</li>
+        <li>Bildgröße NTSC: Breite <code>0x2B81E</code>, <code>0x0C042</code>, <code>0x2B924</code>; Höhe <code>0x2B82A</code>, <code>0x2B932</code>, <code>0x2E044</code>.</li>
+        <li>GOP je LED: <code>0x2C086</code>, <code>0x2C090</code>, <code>0x2C09A</code> (MG-Objekt 3, Param 24).</li>
+        <li>Abtastrate: <code>0x0C67A</code> (→ MG Objekt 1, Param 7 AUDIO_SAMPLE_RATE), <code>0x1AA9E</code> (Host-Konfiguration, RAM-Struktur der Aufzeichnung), <code>0x2AA0C</code> (mp4a-Vorlage des MP4-Schreibers). Alle drei im Original vorhanden.</li>
+        <li>MG-Tabelle: Videopuffer p03 bei <code>0x2A626</code>, Audiopuffer p04 bei <code>0x2A62A</code>.</li>
+        <li>AE rein: die sechs RC-Konstanten von LED1 (ab <code>0x2E11E</code>, Abstand 0x22) werden nach LED2 (+0x158) und LED3 (+0x2B0) kopiert.</li>
+        <li>TF-Stufe: die <code>moveq</code>-Werte bei <code>0x2B177</code>, <code>0x2B17D</code>, <code>0x2B183</code>.</li>
+      </ul>
+    </details>
+    <details class="help">
+      <summary>Bekannte Builds und ihr Prüfstand</summary>
+      <div class="tablewrap"><table id="knownTable"><thead><tr><th>Name</th><th>Stand</th><th class="mono">SHA-256 (Anfang)</th></tr></thead><tbody></tbody></table></div>
+    </details>
+  </section>
+</main>
+<footer>
+  <p>Baukasten 1.5 · Stand 21.10.2026, 07:30. Freie Werte, nur technische Sperren. Experimentelle Firmware: jede neue Kombination hat 0 Hardwaretests. Rückkehrdateien (AE und Original) liegen jedem Paket bei. Backups und Dumps behalten.</p>
+</footer>
+<script>
+/* PVT Firmware-Baukasten – Kern (reine Funktionen, keine DOM-Zugriffe).
+   Alles läuft im Browser. Basis ist immer das geprüfte AE-Abbild; das Original
+   01.00.46.03 wird über die eingebaute Differenz zu AE gemacht. Geändert werden
+   ausschließlich Zahlenwerte an bekannten Stellen mit Prüfung des Befehlsworts davor
+   (wie build_ag.py / build_ah.py / build_ai.py des Projekts). */
+const CORE = (() => {
+  'use strict';
+  const SIZE = 245760;
+  const KNOWN = [
+    ['032fd7d2241aff1eb87403b72554dd1c7babe97a31c54b7418f9ea1657213fdc', 'Original 01.00.46.03 (Pinnacle, 14.03.2008)', 'Werksstand'],
+    ['d4ae6a9b99370e57d3c19652e6d0f071323a9f713d6b238462999eaa317c07a7', 'AE (Vorführstand)', 'am Gerät geprüft: 2 h 30 min und 5 h 03 min ohne Ton'],
+    ['6e39e44e80b7a0ace55d7f7f3dbbbf0c15b66a2f5223b03c6b944a4f8a287d99', 'AE rein (LED2/LED3 wie LED1)', 'LED1 wie AE geprüft, LED2/LED3 ungeprüft'],
+    ['34633fcbf56e7db68e64cd967b21890081655c4a460eb69a8e03f34113a72dfd', 'AB (Vorgänger von AE)', 'am Gerät geprüft'],
+    ['ecfc7a297c95dbdc75f0faeb8fed1e1b771f0c1690a970610c8600ce5e1faf93', 'AG_4900_128', 'ungeprüft'],
+    ['54d9afb8ff3d95cee1d003b54f71eca5bc97280b07966d209e7ee185954d4bd8', 'AG_4800_192', 'ungeprüft'],
+    ['92ad9a5c56585ff7113e79d1378b415fdee589957c63694a189cc29d845c1da3', 'AG_4500_128', 'ungeprüft'],
+    ['da2342eb4791231e589c4accb262ca8fcfb9ab459aa8529e5719374b3ecffc1e', 'AH_4900_128_P04_256', 'ungeprüft'],
+    ['091fb10a5c69745a09797b815a00031e81a304b25719e29b6ab6126042eab0e0', 'AI_528_4500_192', 'ungeprüft'],
+    ['fd5e2f3584542146d229ce3d899ff2a50e9b9b8834250e0300771c6535bfca4e', 'AI_528_4800_192', 'ungeprüft'],
+    ['271938dbd8987439869488e3d3dae20a51ce93b376628e78776019809f61df21', 'AI_528_4500_192_P04_256', 'ungeprüft'],
+    ['9952bab7e17a43a9b5fd756497f1c89fecd1bb12a40b323df33323483602e1fe', 'AE_V5000_A96_B528_REIN', 'geprüft 20.10.: Bild ok, Ton hält, Video 40 % Verlust in Phasen (zu hohe Rate)'],
+    ['13508fa0b54fdd72fcb88738b69f0ed294b3599dc462655fe0d65fe0405a8960', 'AE_V4500_A96_B528_REIN', 'geprüft 20.10.: 117 s, Ton 99 %, Video sauber bis auf 10 s Störung bei 86 s'],
+    ['7ee1f171721867e2df5f4c8136d94faba823073bc10a489b9ab283fe5aa559d9', 'AE_V4500_A96_B528_SR32000_REIN', 'geprüft 20.10. (VID00011): Takt bleibt 48 kHz → Ton 1,5× zu langsam, MG läuft über, Video 50 % kaputt, Ton tot ab 4 s. Abtastrate ist kein Hebel.']
+  ];
+  const H_ORIG = KNOWN[0][0], H_AE = KNOWN[1][0];
+  const DELTA=[[33034,"05dc","1388"],
+[33807,"5e4e754e71","f90002f200"],
+[50432,"7000102b0008","4ef90002f900"],
+[51562,"2e8c4ebaf526","4ef900032000"],
+[109302,"7000103920","4ef90002f3"],
+[109308,"025e","4e71"],
+[173608,"0340","0800"],
+[176192,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","20130c80000002d066000072202b00040c800000024066000064202b000e0c80000000016600005670002f40000870092f4000042e8c4eb90000fdcc4a806600004870012f40000870232f4000042e8c4eb90000fdcc4a806600002e70002f400008701d2f4000042e8c4eb90000fdcc4a80660000144ef90002f1007000102b00084ef9000105064ef900010852"],
+[176384,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","4ef90002f140700a2f4000042e8c4eb90000fdcc4a80660000084ef9000306004ef900010852"],
+[176448,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","700010392000024d4a806600002470001039200002444a806700001c0c8000000001670000180c80000000026700001470006000001070036000000a70036000000470032f4000084ef90002f106"],
+[176640,"ffff","4fef"],
+[176643,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","fc2e80202e00080c8000000001660005ee700010392000024d0c80000000006600008a203c000002d033c020000256203c0000024033c0200002584ef90003000033c02000025a203c0000000113c02000025c203c0000003013c02000025d203c000000c013c02000025e203c0000000013c02000025f203c0000000013c02000026070001039200003140c80000000046700000c203c0000000060000008203c0000000f13c02000026120174fef00044e5e4e75"],
+[176896,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","2039200008c80c800000000166000572700010392000024d0c80000000006600000e203c000001804ef90001eafe700010392000025e4ef90001eafe"],
+[177408,"ffff","4fef"],
+[177411,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","e02f4000102f4100142f4800182f49001c700010392000024d4a80660000c470001039200002442f40000c4a806700000870016000000470012f40000870032f4000042e8c4eb90002f7004a80660000ac202f000c0c80000000016700000870026000000470022f40000c2f40000870042f4000042e8c4eb90002f7004a806600007a202f000c2f40000870052f4000042e8c4eb90002f7004a806600005e70002f40000870242f4000042e8c4eb90002f7004a806600004470002f40000870712f4000042e8c4eb90002f7004a806600002a2e8c4eb90000fd944a806600001c202f0010222f0014206f0018226f001c4fef00204ef900010570202f0010222f0014206f0018226f001c4fef00204ef900010852"],
+[177920,"ffffffffffff","4e5600004fef"],
+[177927,"ffffffffffffff","b8226e000841ee"],
+[177935,"ffffffffff","c870032d40"],
+[177941,"ffffffffff","c0700e2d40"],
+[177947,"ffffffffffffffffffffffffff","c420ae000c216e0010000441ee"],
+[177961,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","c02f4800042e894eb90000f9404a806608203c08000007600270004e5e4e754e71"],
+[178176,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","0c80000000006600faa6700010392000024d0c80000000006600fa94203c000002d033c020000256203c000001e033c0200002584ef90002f23e"],
+[178304,"ffffffffffffffffffffffffffffffff","0c80000000006600faa64ef90002f310"],
+[178432,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","700010392000024d0c800000000066000030202b000e0c80000000006600002220130c80000002d066000016202b00040c80000001e0660000084ef90002f0684ef90002f040"],
+[180224,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","203c0000138833c02000025a203c0000000113c02000025c203c0000003013c02000025d203c000000c013c02000025e203c0000000013c02000025f203c0000000013c02000026070001039200003140c80000000046700005470001039200002440c80000000006700001a0c80000000016700001a0c80000000026700001a60000020203c0000003260000026203c000000326000001c203c0000003260000012203c0000000060000008203c0000000f13c0200002614ef90002f2ae"],
+[181760,"ffff","4fef"],
+[181763,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","e02f4000102f4100142f4800182f49001c700010392000024d0c8000000000660002ee70001039200002440c80000000006700001a0c8000000001670000be0c8000000002670001626000020c203c000000012f400008203c000000032f4000042e8c4eb90002f7004a80660002bc203c000000022f400008203c000000042f4000042e8c4eb90002f7004a806600029a203c000000022f400008203c000000052f4000042e8c4eb90002f7004a8066000278203c000000002f400008203c000000242f4000042e8c4eb90002f7004a8066000256203c000000002f400008203c000000712f4000042e8c4eb90002f7004a806600023460000208203c000000012f400008203c000000032f4000042e8c4eb90002f7004a806600020e203c000000022f400008203c000000042f4000042e8c4eb90002f7004a80660001ec203c000000022f400008203c000000052f4000042e8c4eb90002f7004a80660001ca203c000000002f400008203c000000242f4000042e8c4eb90002f7004a80660001a8203c000000002f400008203c000000712f4000042e8c4eb90002f7004a80660001866000015a203c000000012f400008203c000000032f4000042e8c4eb90002f7004a8066000160203c000000022f400008203c000000042f4000042e8c4eb90002f7004a806600013e203c000000022f400008203c000000052f4000042e8c4eb90002f7004a806600011c203c000000002f400008203c000000242f4000042e8c4eb90002f7004a80660000fa203c000000002f400008203c000000712f4000042e8c4eb90002f7004a80660000d8600000ac203c000000012f400008203c000000032f4000042e8c4eb90002f7004a80660000b2203c000000022f400008203c000000042f4000042e8c4eb90002f7004a8066000090203c000000022f400008203c000000052f4000042e8c4eb90002f7004a806600006e203c000000002f400008203c000000242f4000042e8c4eb90002f7004a806600004c203c000000002f400008203c000000712f4000042e8c4eb90002f7004a806600002a2e8c4eb90000fd944a806600001c202f0010222f0014206f0018226f001c4fef00204ef900010570202f0010222f0014206f0018226f001c4fef00204ef900010852"],
+[188416,"ffff","4fef"],
+[188419,"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","e02f4000102f4100142f4800182f49001c700010392000024d0c800000000066000478202b000e0c80000000016700001e0c800000000066000460202b00040c80000001e06600045260000010202b00040c80000002406600044020130c80000002d06600043470001039200002440c80000000006700001a0c8000000001670001680c8000000002670002b66000040a203c000000002f400008203c0000001c2f4000042e8c4eb90000fe4c4a8066000410203c000000002f400008203c0000000d2f4000042e8c4eb90000fe4c4a80660003ee203c0000000d2f400008203c0000000f2f4000042e8c4eb90000fe4c4a80660003cc203c000000332f400008203c000000102f4000042e8c4eb90000fe4c4a80660003aa203c000000002f400008203c000000092f4000042e8c4eb90000fe4c4a8066000388203c001312d02f400008203c0000000a2f4000042e8c4eb90000fe4c4a8066000366203c004c4b402f400008203c0000000b2f4000042e8c4eb90000fe4c4a8066000344203c00002bf22f400008203c0000000c2f4000042e8c4eb90000fe4c4a8066000322203c000000012f400008203c000000062f4000042e8c4eb90000fe4c4a8066000300203c017d78402f400008203c000000072f4000042e8c4eb90000fe4c4a80660002de600002b2203c000000002f400008203c0000001c2f4000042e8c4eb90000fe4c4a80660002b8203c000000002f400008203c0000000d2f4000042e8c4eb90000fe4c4a8066000296203c0000000d2f400008203c0000000f2f4000042e8c4eb90000fe4c4a8066000274203c000000332f400008203c000000102f4000042e8c4eb90000fe4c4a8066000252203c000000012f400008203c000000092f4000042e8c4eb90000fe4c4a8066000230203c004c4b402f400008203c0000000a2f4000042e8c4eb90000fe4c4a806600020e203c004c4b402f400008203c0000000b2f4000042e8c4eb90000fe4c4a80660001ec203c0000afc82f400008203c0000000c2f4000042e8c4eb90000fe4c4a80660001ca203c000000012f400008203c000000062f4000042e8c4eb90000fe4c4a80660001a8203c017d78402f400008203c000000072f4000042e8c4eb90000fe4c4a80660001866000015a203c000000002f400008203c0000001c2f4000042e8c4eb90000fe4c4a8066000160203c000000002f400008203c0000000d2f4000042e8c4eb90000fe4c4a806600013e203c0000000d2f400008203c0000000f2f4000042e8c4eb90000fe4c4a806600011c203c000000332f400008203c000000102f4000042e8c4eb90000fe4c4a80660000fa203c000000012f400008203c000000092f4000042e8c4eb90000fe4c4a80660000d8203c009896802f400008203c0000000a2f4000042e8c4eb90000fe4c4a80660000b6203c004c4b402f400008203c0000000b2f4000042e8c4eb90000fe4c4a8066000094203c00015f902f400008203c0000000c2f4000042e8c4eb90000fe4c4a8066000072203c000000012f400008203c000000062f4000042e8c4eb90000fe4c4a8066000050203c017d78402f400008203c000000072f4000042e8c4eb90000fe4c4a806600002e60000002202f0010222f0014206f0018226f001c4fef00202e8c4eb90000fe944a806600001c4ef900010970202f0010222f0014206f0018226f001c4fef00204ef900010852"]];
+
+  // ---- Bytes, Hex, SHA-256, CRC-32 --------------------------------------------
+  const hex = (u8) => Array.from(u8, b => b.toString(16).padStart(2, '0')).join('');
+  const unhex = (s) => { const u = new Uint8Array(s.length / 2); for (let i = 0; i < u.length; i++) u[i] = parseInt(s.substr(i * 2, 2), 16); return u; };
+  const u32 = (b, o) => ((b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3]) >>> 0;
+  const u16 = (b, o) => (b[o] << 8) | b[o + 1];
+  const put32 = (b, o, v) => { b[o] = (v >>> 24) & 255; b[o + 1] = (v >>> 16) & 255; b[o + 2] = (v >>> 8) & 255; b[o + 3] = v & 255; };
+  const sha256 = (data) => {
+    const K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+    let H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+    const len = data.length, padLen = ((len + 9 + 63) >> 6) << 6;
+    const m = new Uint8Array(padLen); m.set(data); m[len] = 0x80;
+    const bits = len * 8; m[padLen - 4] = (bits >>> 24) & 255; m[padLen - 3] = (bits >>> 16) & 255; m[padLen - 2] = (bits >>> 8) & 255; m[padLen - 1] = bits & 255;
+    m[padLen - 8] = Math.floor(bits / 0x100000000) & 255;
+    const w = new Int32Array(64), rotr = (x, n) => (x >>> n) | (x << (32 - n));
+    for (let off = 0; off < padLen; off += 64) {
+      for (let i = 0; i < 16; i++) w[i] = (m[off + i * 4] << 24) | (m[off + i * 4 + 1] << 16) | (m[off + i * 4 + 2] << 8) | m[off + i * 4 + 3];
+      for (let i = 16; i < 64; i++) { const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3), s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10); w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0; }
+      let [a, b, c, d, e, f, g, h] = H;
+      for (let i = 0; i < 64; i++) {
+        const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25), ch = (e & f) ^ (~e & g), t1 = (h + S1 + ch + K[i] + w[i]) | 0;
+        const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22), maj = (a & b) ^ (a & c) ^ (b & c), t2 = (S0 + maj) | 0;
+        h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      H = [a, b, c, d, e, f, g, h].map((v, i) => (H[i] + v) | 0);
+    }
+    return H.map(v => (v >>> 0).toString(16).padStart(8, '0')).join('');
+  };
+  const CRC_T = (() => { const t = new Int32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c; } return t; })();
+  const crc32 = (u8) => { let c = -1; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ -1) >>> 0; };
+
+  // ---- Bekannte Stellen im AE-Abbild (Datei-Offsets) --------------------------
+  // Alle Stellen sind Zahlenkonstanten mit festem Befehlswort davor. Rollen per Mutationstest im
+  // CF-Modell der Übergabe bestätigt (jede Stelle ändert genau den genannten MG-Parameter).
+  const MOVEL = 0x203c, CMPIL = 0x0c80, MOVEQ = 0x70;
+  const KBPS = [0x08108, 0x2c002];                 // move.l #5000  Videoziel kbit/s
+  const RC7 = [0x2e1c8, 0x2e320, 0x2e478];         // move.l #25000000  Größentoleranz = Video×5000
+  const RC11 = [0x2e162, 0x2e2ba, 0x2e412];        // move.l #5000000   Modelltransfer = Video×1000
+  const AUDIO = 0x2b324;                           // move.l #384  Audioanforderung kbit/s
+  const WIDTH = [[0x2b228, MOVEL, 'Breite PAL: Wahl → MG DecimationH'], [0x0c13c, CMPIL, 'Breite PAL: nativer D1-Vergleich (Pixelformat 16:15)'],
+    [0x2b044, CMPIL, 'Breite PAL: Encoder-Erweiterung'], [0x2e062, CMPIL, 'Breite: RC-Erweiterung (PAL und NTSC gemeinsam)']];          // 720
+  const HEIGHT = [[0x2b234, MOVEL, 'Höhe PAL: Wahl → MG DecimationV'], [0x2b052, CMPIL, 'Höhe PAL: Encoder-Erweiterung'], [0x2e056, CMPIL, 'Höhe PAL: RC-Erweiterung']]; // 576
+  const WIDTH_N = [[0x2b81e, MOVEL, 'Breite NTSC: Wahl → MG DecimationH'], [0x0c042, CMPIL, 'Breite NTSC: nativer D1-Vergleich (Pixelformat 8:9)'], [0x2b924, CMPIL, 'Breite NTSC: Encoder-Erweiterung']]; // 720
+  const HEIGHT_N = [[0x2b82a, MOVEL, 'Höhe NTSC: Wahl → MG DecimationV'], [0x2b932, CMPIL, 'Höhe NTSC: Encoder-Erweiterung'], [0x2e044, CMPIL, 'Höhe NTSC: RC-Erweiterung']]; // 480
+  const GOP = [0x2c086, 0x2c090, 0x2c09a];         // move.l #50 je LED → MG GOP-Länge (Objekt 3, Param 24)
+  // Abtastrate 48000 an drei Stellen (alle schon im Original): MG-Systemparameter, Host-Konfiguration (RAM-Struktur,
+  // laut externer Analyse in den Aufzeichnungsablauf kopiert), MP4-Audiobeschreibung (mp4a-Vorlage: 0x40, 0x40, 48000, 2 Kanäle).
+  const SRATE = [[0x0c67a, MOVEL, 'Abtastrate → MG Q_SYS_CFG_AUDIO_SAMPLE_RATE (Objekt 1, Param 7)'],
+    [0x1aa9e, MOVEL, 'Abtastrate: Host-Konfiguration (RAM-Struktur, Aufzeichnung/MP4-Zeitbasis)'],
+    [0x2aa0c, null, 'Abtastrate: MP4-Audiobeschreibung (mp4a-Vorlage)']];
+  const SRATE_TPL = [[0x2aa04, 0x40], [0x2aa08, 0x40], [0x2aa10, 2]]; // Nachbarn der Vorlage als Lagekontrolle
+  const MGHEAD = 0x2a60a, P03 = 0x2a626, P04 = 0x2a62a; // MG-Tabelle: Kopf (2,0,0,84), Videopuffer 2048, Audiopuffer 48 Seiten
+  const TF = [0x2b177, 0x2b17d, 0x2b183];          // moveq #3 je LED (Byte)
+  const LED = { base: 0x2e11e, step: 0x22, n: 6, off: [0, 0x158, 0x2b0] }; // RC9, RC10, RC11, RC12, RC6, RC7 je LED, move.l
+  const LED_AE = [[0, 1250000, 5000000, 11250, 1, 25000000], [1, 5000000, 5000000, 45000, 1, 25000000], [1, 10000000, 5000000, 90000, 1, 25000000]];
+  const RC_NAMES = ['RC9 Puffer-Regelung', 'RC10 Pufferbits', 'RC11 Transferrate', 'RC12 Startverzögerung', 'RC6 Größen-RC', 'RC7 Größentoleranz'];
+  // MG-Handbuch 10.11: RC6/RC7 = SIZE_ENABLE / SIZE_BIT_TOLERANCE (Dateigröße = Soll ± Toleranz in Bit),
+  // RC9/RC10 = BUFFER_ENABLE / BUFFER_SIZE_BITS (Leaky-Bucket für begrenzte Kanäle), RC11 = Kanalrate Bit/s, RC12 = Startverzögerung (90-kHz-Ticks).
+  const AUDIO_OK = [0, 48, 64, 96, 128, 192, 256, 320, 384]; // Vorschläge; 0 = nur Video; MG-Datenblatt: 8-384 kbit/s
+  const AVSEL = 0x0c363;                           // moveq #1,d5 (0x7A01): MG ENC_INPUT_SELECT/ENC_AV_SELECT (Param 40/17), 1 = Audio+Video, 2 = nur Video
+  const DEFAULTS = { video: 5000, audio: 384, width: 720, height: 576, widthN: 720, heightN: 480, p03: 2048, p04: 48, gop: [50, 50, 50], srate: 48000,
+    rc7f: 5000, rc11f: 1000, rc9: 0, rc10: 1250000, rc12: 11250, rein: false, tf: [3, 3, 3] };
+  // Harte Grenzen = was die Stellen technisch fassen (32-Bit-Werte, moveq-Byte). Alles andere sind Hinweise in der Oberfläche.
+  const LIMITS = { video: [1, 858993], audio: [0, 4294967], size: [1, 65535], pages: [1, 65535], gop: [1, 4294967295], srate: [1, 4294967295], tf: [0, 127],
+    rcf: [1, 4294967295], rc10: [1, 4294967295], rc12: [0, 4294967295] };
+
+  const ledAddr = (led, k) => LED.base + LED.off[led] + k * LED.step;
+  const need = (ok, msg) => { if (!ok) throw new Error(msg); };
+  const at = (o) => '0x' + o.toString(16).toUpperCase().padStart(5, '0');
+  const withDefaults = (s) => Object.assign({}, DEFAULTS, Object.fromEntries(Object.entries(s).filter(([, v]) => v !== null && v !== undefined)), { gop: (s.gop || DEFAULTS.gop).slice(), tf: (s.tf || DEFAULTS.tf).slice() });
+
+  function applyDelta(orig, toAE) {
+    const out = new Uint8Array(orig);
+    for (const [o, oh, ah] of DELTA) {
+      const from = unhex(toAE ? oh : ah), to = unhex(toAE ? ah : oh);
+      for (let i = 0; i < from.length; i++) need(out[o + i] === from[i], 'Differenz passt nicht bei ' + at(o + i));
+      out.set(to, o);
+    }
+    return out;
+  }
+  function knownName(sha) { const k = KNOWN.find(x => x[0] === sha); return k ? { name: k[1], status: k[2] } : null; }
+
+  // Liest die Einstellungen aus einem AE-artigen Abbild (prüft die Befehlsworte).
+  function readSettings(b) {
+    const s = {};
+    const readSites = (sites, what) => {
+      const vals = sites.map(([o, op]) => { need(u16(b, o - 2) === op, what + ' nicht gefunden bei ' + at(o)); return u32(b, o); });
+      need(vals.every(v => v === vals[0]), what + ' uneinheitlich'); return vals[0];
+    };
+    need(u16(b, KBPS[0] - 2) === MOVEL && u16(b, KBPS[1] - 2) === MOVEL, 'Videoziel nicht gefunden');
+    s.video = u32(b, KBPS[0]); need(u32(b, KBPS[1]) === s.video, 'Videoziel uneinheitlich');
+    need(u16(b, AUDIO - 2) === MOVEL, 'Audioanforderung nicht gefunden'); s.audio = u32(b, AUDIO);
+    need(b[AVSEL - 1] === 0x7a && (b[AVSEL] === 1 || b[AVSEL] === 2), 'AV-Auswahl nicht gefunden');
+    if (b[AVSEL] === 2) s.audio = 0;
+    s.width = readSites(WIDTH, 'Breite'); s.height = readSites(HEIGHT, 'Höhe');
+    s.widthN = readSites(WIDTH_N, 'Breite NTSC'); s.heightN = readSites(HEIGHT_N, 'Höhe NTSC');
+    s.gop = GOP.map(o => { need(u16(b, o - 2) === MOVEL, 'GOP nicht gefunden'); return u32(b, o); });
+    SRATE_TPL.forEach(([o, v]) => need(u32(b, o) === v, 'MP4-Audiovorlage nicht gefunden'));
+    const sr = SRATE.map(([o, op]) => { need(op === null || u16(b, o - 2) === op, 'Abtastrate nicht gefunden bei ' + at(o)); return u32(b, o); });
+    need(sr.every(v => v === sr[0]), 'Abtastrate uneinheitlich'); s.srate = sr[0];
+    need(u32(b, MGHEAD) === 2 && u32(b, MGHEAD + 4) === 0 && u32(b, MGHEAD + 8) === 0 && u32(b, MGHEAD + 12) === 84, 'MG-Tabelle nicht gefunden');
+    s.p03 = u32(b, P03); s.p04 = u32(b, P04);
+    s.tf = TF.map(o => { need(b[o - 1] === MOVEQ, 'TF-Stufe nicht gefunden'); return b[o]; });
+    s.led = [0, 1, 2].map(led => Array.from({ length: LED.n }, (_, k) => { const o = ledAddr(led, k); need(u16(b, o - 2) === MOVEL, 'RC-Block nicht gefunden'); return u32(b, o); }));
+    s.rein = s.led[1].every((v, k) => v === s.led[0][k]) && s.led[2].every((v, k) => v === s.led[0][k]);
+    const f = (v) => (s.video && v % s.video === 0) ? v / s.video : null;
+    s.rc7f = f(s.led[0][5]); s.rc11f = f(s.led[0][2]); s.rc9 = s.led[0][0]; s.rc10 = s.led[0][1]; s.rc12 = s.led[0][3];
+    return s;
+  }
+
+  // Setzt alle bekannten Stellen auf AE zurück; stimmt danach der Hash, war das Abbild ein AE-Abkömmling.
+  function normalize(b) {
+    const out = new Uint8Array(b);
+    KBPS.forEach(o => put32(out, o, 5000)); RC7.forEach(o => put32(out, o, 25000000)); RC11.forEach(o => put32(out, o, 5000000));
+    put32(out, AUDIO, 384); out[AVSEL] = 1;
+    WIDTH.forEach(([o]) => put32(out, o, 720)); HEIGHT.forEach(([o]) => put32(out, o, 576)); WIDTH_N.forEach(([o]) => put32(out, o, 720)); HEIGHT_N.forEach(([o]) => put32(out, o, 480));
+    GOP.forEach(o => put32(out, o, 50)); SRATE.forEach(([o]) => put32(out, o, 48000)); put32(out, P03, 2048); put32(out, P04, 48);
+    TF.forEach(o => { out[o] = 3; });
+    for (let led = 0; led < 3; led++) for (let k = 0; k < LED.n; k++) put32(out, ledAddr(led, k), LED_AE[led][k]);
+    return out;
+  }
+
+  // Erkennt ein geladenes CFUPDATE.BIN und liefert, wenn möglich, das AE-Basisabbild.
+  function identify(bytes) {
+    const r = { size: bytes.length, sha: null, kind: 'unknown', known: null, settings: null, base: null, orig: null, note: '' };
+    if (bytes.length !== SIZE) { r.note = 'Größe ' + bytes.length + ' Byte, erwartet ' + SIZE + '.'; return r; }
+    r.sha = sha256(bytes); r.known = knownName(r.sha);
+    if (r.sha === H_ORIG) {
+      const ae = applyDelta(bytes, true); need(sha256(ae) === H_AE, 'Original → AE: Ergebnis stimmt nicht mit AE überein');
+      r.kind = 'orig'; r.base = ae; r.orig = bytes; r.settings = readSettings(ae); return r;
+    }
+    try { r.settings = readSettings(bytes); } catch (e) { r.note = 'Keine AE-Struktur: ' + e.message; return r; }
+    if (r.sha === H_AE) { r.kind = 'ae'; r.base = bytes; }
+    else {
+      const n = normalize(bytes);
+      if (sha256(n) === H_AE) { r.kind = 'derived'; r.base = n; }
+      else { r.kind = 'unknown'; r.note = 'AE-Struktur vorhanden, aber andere Code-Teile. Nicht als Basis geeignet.'; return r; }
+    }
+    r.orig = applyDelta(r.base, false); need(sha256(r.orig) === H_ORIG, 'AE → Original: Ergebnis stimmt nicht mit dem Original überein');
+    return r;
+  }
+
+  // Nur technische Grenzen: ganze Zahlen, die in die Stellen passen (Video×5000 und Audio×1000 müssen 32 Bit bleiben).
+  function checkSettings(s) {
+    const int = (v, [lo, hi]) => Number.isInteger(v) && v >= lo && v <= hi;
+    need(int(s.video, LIMITS.video), 'Videoziel: ganze Zahl 1 bis 858993 kbit/s (Video×5000 muss in 32 Bit passen).');
+    need(int(s.audio, LIMITS.audio), 'Audio: 0 (aus) oder ganze Zahl bis 4294967 kbit/s.');
+    [['width', 'Breite PAL'], ['height', 'Höhe PAL'], ['widthN', 'Breite NTSC'], ['heightN', 'Höhe NTSC']].forEach(([k, n]) => need(int(s[k], LIMITS.size), n + ': ganze Zahl 1 bis 65535.'));
+    need(int(s.p03, LIMITS.pages) && int(s.p04, LIMITS.pages), 'MG-Puffer: ganze Zahl 1 bis 65535 Seiten.');
+    need(Array.isArray(s.gop) && s.gop.length === 3 && s.gop.every(g => int(g, LIMITS.gop)), 'GOP: ganze Zahl ab 1 je LED.');
+    need(int(s.srate, LIMITS.srate), 'Abtastrate: ganze Zahl in Hz.');
+    need(int(s.rc7f, LIMITS.rcf) && s.video * s.rc7f <= 4294967295, 'Größentoleranz-Faktor: ganze Zahl, Video×Faktor muss in 32 Bit passen.');
+    need(int(s.rc11f, LIMITS.rcf) && s.video * s.rc11f <= 4294967295, 'Transferraten-Faktor: ganze Zahl, Video×Faktor muss in 32 Bit passen.');
+    need(s.rc9 === 0 || s.rc9 === 1, 'Puffer-Regelung: 0 oder 1.');
+    need(int(s.rc10, LIMITS.rc10) && int(s.rc12, LIMITS.rc12), 'Pufferbits ab 1, Startverzögerung ab 0 (ganze Zahlen).');
+    need(Array.isArray(s.tf) && s.tf.length === 3 && s.tf.every(t => int(t, LIMITS.tf)), 'TF-Stufe: ganze Zahl 0 bis 127 je LED (moveq-Byte).');
+  }
+
+  // Baut aus dem AE-Abbild die gewünschte Variante. Liefert Bytes, Patchliste, Hash.
+  function build(ae, settings) {
+    const s = withDefaults(settings);
+    checkSettings(s);
+    need(sha256(ae) === H_AE, 'Basis ist nicht das AE-Abbild');
+    const out = new Uint8Array(ae), patches = [];
+    const set32 = (o, oldV, newV, name, op) => {
+      need(u16(out, o - 2) === op, 'Befehlswort vor ' + at(o) + ' unerwartet (' + name + ')');
+      need(u32(out, o) === oldV, 'Alter Wert bei ' + at(o) + ' ist ' + u32(out, o) + ', erwartet ' + oldV + ' (' + name + ')');
+      if (oldV !== newV) { put32(out, o, newV); patches.push({ o, name, old: oldV, neu: newV }); }
+    };
+    [[0x2e11e, 0], [0x2e140, 1250000], [0x2e184, 11250], [0x2e1a6, 1], [0x2e2fe, 1], [0x2e456, 1], [0x2e298, 5000000], [0x2e3f0, 10000000], [0x2e276, 1], [0x2e3ce, 1]]
+      .forEach(([o, v]) => need(u16(out, o - 2) === MOVEL && u32(out, o) === v, 'Lagekontrolle fehlgeschlagen bei ' + at(o)));
+    KBPS.forEach(o => set32(o, 5000, s.video, 'Videoziel kbit/s', MOVEL));
+    RC7.forEach(o => set32(o, 25000000, s.video * s.rc7f, 'RC7 Größentoleranz (Video×' + s.rc7f + ')', MOVEL));
+    RC11.forEach(o => set32(o, 5000000, s.video * s.rc11f, 'RC11 Transferrate (Video×' + s.rc11f + ')', MOVEL));
+    set32(ledAddr(0, 0), 0, s.rc9, 'LED1 RC9 Puffer-Regelung (0 aus, 1 an)', MOVEL);
+    set32(ledAddr(0, 1), 1250000, s.rc10, 'LED1 RC10 Pufferbits', MOVEL);
+    set32(ledAddr(0, 3), 11250, s.rc12, 'LED1 RC12 Startverzögerung (90-kHz-Ticks)', MOVEL);
+    if (s.audio === 0) {
+      need(out[AVSEL - 1] === 0x7a && out[AVSEL] === 1, 'AV-Auswahl unerwartet bei ' + at(AVSEL));
+      out[AVSEL] = 2; patches.push({ o: AVSEL, name: 'MG AV-Auswahl (Param 40/17): 1 = Audio+Video → 2 = nur Video', old: 1, neu: 2 });
+    } else set32(AUDIO, 384, s.audio, 'Audioanforderung kbit/s', MOVEL);
+    WIDTH.forEach(([o, op, name]) => set32(o, 720, s.width, name, op));
+    HEIGHT.forEach(([o, op, name]) => set32(o, 576, s.height, name, op));
+    WIDTH_N.forEach(([o, op, name]) => set32(o, 720, s.widthN, name, op));
+    HEIGHT_N.forEach(([o, op, name]) => set32(o, 480, s.heightN, name, op));
+    GOP.forEach((o, i) => set32(o, 50, s.gop[i], 'GOP-Länge LED' + (i + 1) + ' (MG Param 24)', MOVEL));
+    SRATE_TPL.forEach(([o, v]) => need(u32(out, o) === v, 'MP4-Audiovorlage unerwartet bei ' + at(o)));
+    SRATE.forEach(([o, op, name]) => { if (op === null) { need(u32(out, o) === 48000, 'Abtastrate unerwartet bei ' + at(o)); if (s.srate !== 48000) { put32(out, o, s.srate); patches.push({ o, name, old: 48000, neu: s.srate }); } } else set32(o, 48000, s.srate, name, op); });
+    need(u32(out, MGHEAD) === 2 && u32(out, MGHEAD + 12) === 84 && u32(out, P03) === 2048 && u32(out, P04) === 48, 'MG-Tabelle unerwartet');
+    if (s.p03 !== 2048) { put32(out, P03, s.p03); patches.push({ o: P03, name: 'MG-Videopuffer p03 (Seiten à 2 KB)', old: 2048, neu: s.p03 }); }
+    if (s.p04 !== 48) { put32(out, P04, s.p04); patches.push({ o: P04, name: 'MG-Audiopuffer p04 (Seiten à 2 KB)', old: 48, neu: s.p04 }); }
+    TF.forEach((o, i) => { need(out[o - 1] === MOVEQ && out[o] === 3, 'TF-Stufe unerwartet bei ' + at(o)); if (s.tf[i] !== 3) { out[o] = s.tf[i]; patches.push({ o, name: 'TF-Stufe LED' + (i + 1), old: 3, neu: s.tf[i] }); } });
+    if (s.rein) for (let led = 1; led < 3; led++) for (let k = 0; k < LED.n; k++) {
+      const src = ledAddr(0, k), dst = ledAddr(led, k), v = u32(out, src), old = u32(out, dst);
+      need(u16(out, dst - 2) === MOVEL, 'RC-Block LED' + (led + 1) + ' unerwartet');
+      if (old !== v) { put32(out, dst, v); patches.push({ o: dst, name: 'LED' + (led + 1) + ' ' + RC_NAMES[k] + ' wie LED1', old, neu: v }); }
+    }
+    for (let i = 0; i < SIZE; i++) if (out[i] !== ae[i] && !patches.some(p => i >= p.o && i < p.o + 4)) throw new Error('Unerwartete Änderung bei ' + at(i));
+    return { bytes: out, patches, sha: sha256(out), known: knownName(sha256(out)) };
+  }
+
+  function label(settings) {
+    const s = withDefaults(settings), D = DEFAULTS;
+    const same = (k) => Array.isArray(D[k]) ? s[k].every((v, i) => v === D[k][i]) : s[k] === D[k];
+    if (Object.keys(D).every(same)) return 'AE';
+    let l = 'AE_V' + s.video + (s.audio === 0 ? '_NURVIDEO' : '_A' + s.audio);
+    if (s.width !== 720 || s.height !== 576) l += '_B' + s.width + (s.height !== 576 ? 'x' + s.height : '');
+    if (s.widthN !== 720 || s.heightN !== 480) l += '_N' + s.widthN + 'x' + s.heightN;
+    if (!same('gop')) l += '_G' + (s.gop.every(g => g === s.gop[0]) ? s.gop[0] : s.gop.join('-'));
+    if (s.srate !== 48000) l += '_SR' + s.srate;
+    if (s.rc7f !== 5000) l += '_T' + s.rc7f;
+    if (s.rc11f !== 1000) l += '_TR' + s.rc11f;
+    if (s.rc9 !== 0 || s.rc10 !== 1250000 || s.rc12 !== 11250) l += '_B' + s.rc9 + '-' + s.rc10 + '-' + s.rc12;
+    if (s.p03 !== 2048) l += '_VP' + s.p03;
+    if (s.p04 !== 48) l += '_P' + s.p04;
+    if (s.rein) l += '_REIN';
+    if (!same('tf')) l += '_TF' + s.tf.join(s.tf.some(t => t > 9) ? '-' : '');
+    return l;
+  }
+  const sumMbit = (s) => (s.video + s.audio) / 1000;
+
+  // ---- ZIP lesen (stored + deflate) und schreiben (stored) -----------------------
+  function listZip(buf) {
+    const b = new Uint8Array(buf), dv = new DataView(buf);
+    let eocd = -1;
+    for (let i = b.length - 22; i >= Math.max(0, b.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    need(eocd >= 0, 'Kein ZIP-Archiv (Endrecord fehlt)');
+    const count = dv.getUint16(eocd + 10, true), cdOff = dv.getUint32(eocd + 16, true);
+    const entries = []; let p = cdOff;
+    for (let i = 0; i < count; i++) {
+      need(dv.getUint32(p, true) === 0x02014b50, 'ZIP-Verzeichnis beschädigt');
+      const method = dv.getUint16(p + 10, true), crc = dv.getUint32(p + 16, true), csize = dv.getUint32(p + 20, true), usize = dv.getUint32(p + 24, true);
+      const nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), loff = dv.getUint32(p + 42, true);
+      const name = new TextDecoder().decode(b.subarray(p + 46, p + 46 + nlen));
+      entries.push({ name, method, crc, csize, usize, loff });
+      p += 46 + nlen + elen + clen;
+    }
+    return entries;
+  }
+  async function readZipEntry(buf, e) {
+    const b = new Uint8Array(buf), dv = new DataView(buf);
+    need(dv.getUint32(e.loff, true) === 0x04034b50, 'ZIP-Eintrag beschädigt');
+    const start = e.loff + 30 + dv.getUint16(e.loff + 26, true) + dv.getUint16(e.loff + 28, true);
+    const raw = b.subarray(start, start + e.csize);
+    let data;
+    if (e.method === 0) data = new Uint8Array(raw);
+    else if (e.method === 8) {
+      need(typeof DecompressionStream === 'function', 'Dieser Browser kann das ZIP nicht entpacken. Bitte entpacken und die CFUPDATE.BIN direkt laden.');
+      const ds = new DecompressionStream('deflate-raw');
+      const ab = await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer();
+      data = new Uint8Array(ab);
+    } else throw new Error('ZIP-Methode ' + e.method + ' nicht unterstützt');
+    need(data.length === e.usize, 'ZIP-Eintrag: Größe stimmt nicht');
+    need(crc32(data) === e.crc, 'ZIP-Eintrag: CRC stimmt nicht');
+    return data;
+  }
+  function makeZip(files) { // files: [{name, data: Uint8Array|string}]
+    const enc = new TextEncoder(), parts = [], cd = []; let off = 0;
+    const d = new Date(), dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    for (const f of files) {
+      const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data, name = enc.encode(f.name), crc = crc32(data);
+      const lh = new Uint8Array(30 + name.length), v = new DataView(lh.buffer);
+      v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(6, 0x800, true); v.setUint16(8, 0, true);
+      v.setUint16(10, dosTime, true); v.setUint16(12, dosDate, true); v.setUint32(14, crc, true); v.setUint32(18, data.length, true); v.setUint32(22, data.length, true);
+      v.setUint16(26, name.length, true); v.setUint16(28, 0, true); lh.set(name, 30);
+      const ch = new Uint8Array(46 + name.length), c = new DataView(ch.buffer);
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x800, true); c.setUint16(10, 0, true);
+      c.setUint16(12, dosTime, true); c.setUint16(14, dosDate, true); c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true);
+      c.setUint16(28, name.length, true); c.setUint32(42, off, true); ch.set(name, 46);
+      parts.push(lh, data); cd.push(ch); off += lh.length + data.length;
+    }
+    const cdLen = cd.reduce((n, x) => n + x.length, 0), eocd = new Uint8Array(22), e = new DataView(eocd.buffer);
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cdLen, true); e.setUint32(16, off, true);
+    const total = off + cdLen + 22, out = new Uint8Array(total); let p = 0;
+    for (const x of [...parts, ...cd, eocd]) { out.set(x, p); p += x.length; }
+    return out;
+  }
+
+  return { SIZE, KNOWN, H_ORIG, H_AE, DEFAULTS, LIMITS, AUDIO_OK, RC_NAMES, sha256, hex, at, identify, readSettings, build, label, sumMbit, withDefaults, listZip, readZipEntry, makeZip, applyDelta };
+})();
+
+</script>
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const fmtM = (kb) => (kb / 1000).toFixed(2).replace('.', ',') + ' Mbit/s';
+  const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const state = { fileName: '', candidates: [], chosen: null, built: null };
+  const dlReady = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+
+  // ---------- Schritt 1: Datei ----------
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) loadFile(f); });
+  $('file').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) loadFile(f); e.target.value = ''; });
+
+  async function loadFile(file) {
+    const ident = $('ident'); ident.hidden = false;
+    ident.innerHTML = '<div class="status"><strong>Lese ' + esc(file.name) + ' …</strong></div>';
+    state.fileName = file.name; state.candidates = []; state.chosen = null; state.built = null; renderResult(null);
+    try {
+      const buf = await file.arrayBuffer(); const b = new Uint8Array(buf);
+      if (b.length >= 4 && b[0] === 0x50 && b[1] === 0x4b && b[2] === 3 && b[3] === 4) {
+        const entries = CORE.listZip(buf).filter(e => /cfupdate\.bin$/i.test(e.name) || e.usize === CORE.SIZE);
+        if (!entries.length) throw new Error('Im ZIP ist keine CFUPDATE.BIN (245.760 Byte).');
+        for (const e of entries) {
+          try { const data = await CORE.readZipEntry(buf, e); state.candidates.push({ name: e.name, id: CORE.identify(data) }); }
+          catch (err) { state.candidates.push({ name: e.name, error: err.message }); }
+        }
+      } else {
+        state.candidates.push({ name: file.name, id: CORE.identify(b) });
+      }
+    } catch (err) {
+      ident.innerHTML = '<div class="status bad"><strong>Datei nicht verwendbar</strong>' + esc(err.message) + '</div>';
+      updateBuildButton(); return;
+    }
+    const rank = { orig: 0, ae: 1, derived: 2, unknown: 3 };
+    const usable = state.candidates.filter(c => c.id && c.id.base).sort((a, b) => rank[a.id.kind] - rank[b.id.kind]);
+    state.chosen = usable[0] || null;
+    renderIdent(); updateBuildButton();
+  }
+
+  function kindText(id) {
+    switch (id.kind) {
+      case 'orig': return { cls: 'ok', title: 'Original 01.00.46.03 erkannt', text: 'Die eingebaute Differenz macht daraus den Stand AE; der Hash des Ergebnisses stimmt mit AE überein.' };
+      case 'ae': return { cls: 'ok', title: 'AE (Vorführstand) erkannt', text: 'Byteidentisch mit dem geprüften Vorführstand.' };
+      case 'derived': return { cls: 'ok', title: (id.known ? id.known.name : 'Abkömmling von AE') + ' erkannt', text: 'Nur Zahlenwerte weichen von AE ab. Nach dem Zurücksetzen stimmt der Hash mit AE überein, die Datei taugt als Basis.' + (id.known ? ' Stand: ' + id.known.status + '.' : '') };
+      default: return { cls: 'bad', title: id.known ? id.known.name + ' erkannt, als Basis nicht verwendbar' : 'Unbekannte Firmware', text: id.note || 'Weder Original noch AE-Struktur.' };
+    }
+  }
+  function settingsHtml(s) {
+    if (!s) return '';
+    const led = (i) => s.led[i].map((v, k) => CORE.RC_NAMES[k].split(' ')[0] + '=' + v).join(' · ');
+    return '<dl class="kv">' +
+      '<dt>Videoziel</dt><dd>' + s.video + ' kbit/s</dd>' +
+      '<dt>Audio</dt><dd>' + (s.audio === 0 ? 'aus (nur Video)' : s.audio + ' kbit/s') + '</dd>' +
+      '<dt>Bildgröße</dt><dd>PAL ' + s.width + ' × ' + s.height + ' · NTSC ' + s.widthN + ' × ' + s.heightN + '</dd>' +
+      '<dt>GOP je LED</dt><dd>' + s.gop.join(' / ') + '</dd>' +
+      '<dt>Abtastrate</dt><dd>' + s.srate + ' Hz</dd>' +
+      '<dt>Regelung LED1</dt><dd>RC7 ×' + s.rc7f + ' · RC11 ×' + s.rc11f + ' · Puffer ' + (s.rc9 ? 'an ' + s.rc10 + ' Bit, Start ' + s.rc12 : 'aus') + '</dd>' +
+      '<dt>MG-Puffer</dt><dd>Video p03 ' + s.p03 + ' · Audio p04 ' + s.p04 + ' Seiten</dd>' +
+      '<dt>TF je LED</dt><dd>' + s.tf.join(' / ') + '</dd>' +
+      '<dt>LED1</dt><dd>' + led(0) + '</dd><dt>LED2</dt><dd>' + led(1) + '</dd><dt>LED3</dt><dd>' + led(2) + '</dd></dl>';
+  }
+  function renderIdent() {
+    const ident = $('ident'); let html = '';
+    if (state.candidates.length > 1) {
+      html += '<p class="small muted" style="margin-top:12px">Mehrere CFUPDATE.BIN im Archiv. Basis für den Bau:</p><ul class="entries">';
+      state.candidates.forEach((c, i) => {
+        const ok = c.id && c.id.base, sel = c === state.chosen;
+        html += '<li><label class="' + (sel ? 'sel' : '') + '"><input type="radio" name="cand" value="' + i + '"' + (sel ? ' checked' : '') + (ok ? '' : ' disabled') + '><span><strong class="mono small">' + esc(c.name) + '</strong><br><span class="small muted">' +
+          esc(c.error ? 'Fehler: ' + c.error : (c.id.known ? c.id.known.name : (c.id.kind === 'unknown' ? 'unbekannt' : 'AE-Abkömmling')) + (ok ? '' : ' (nicht verwendbar)')) + '</span></span></label></li>';
+      });
+      html += '</ul>';
+    }
+    const c = state.chosen || state.candidates[0];
+    if (c) {
+      if (c.error) html += '<div class="status bad"><strong>' + esc(c.name) + '</strong>' + esc(c.error) + '</div>';
+      else {
+        const k = kindText(c.id);
+        html += '<div class="status ' + k.cls + '"><strong>' + esc(k.title) + '</strong>' + esc(k.text) +
+          (c.id.sha ? '<span class="hash" style="margin-top:8px">SHA-256 ' + c.id.sha + '</span>' : '') + settingsHtml(c.id.settings) +
+          (c.id.kind === 'derived' ? '<p style="margin:10px 0 0"><button class="btn sm" type="button" id="takeOver">Einstellungen dieser Datei ins Formular übernehmen</button></p>' : '') + '</div>';
+      }
+    }
+    ident.innerHTML = html;
+    ident.querySelectorAll('input[name=cand]').forEach(r => r.addEventListener('change', () => { state.chosen = state.candidates[+r.value]; state.built = null; renderResult(null); renderIdent(); updateBuildButton(); }));
+    const t = $('takeOver'); if (t) t.addEventListener('click', () => { setForm(c.id.settings); });
+  }
+
+  // ---------- Schritt 2: Einstellungen ----------
+  const preset = (o) => CORE.withDefaults(o);
+  const PRESETS = {
+    ae: preset({}),
+    ton96: preset({ video: 4500, audio: 96, width: 528, rein: true }),
+    ton64: preset({ video: 4500, audio: 64, width: 528, rein: true }),
+    nurvideo: preset({ audio: 0 }),
+    ai528: preset({ video: 4800, audio: 192, width: 528 }),
+    rein: preset({ rein: true })
+  };
+  const NUM = ['video', 'audio', 'width', 'height', 'widthN', 'heightN', 'p03', 'p04', 'srate', 'rc7f', 'rc11f', 'rc10', 'rc12'];
+  const num = (id) => { const v = $(id).value.trim(); return v === '' ? NaN : Number(v); };
+  function readForm() {
+    const o = { rein: $('rein').checked, rc9: $('rc9').checked ? 1 : 0, gop: [num('gop1'), num('gop2'), num('gop3')], tf: [num('tf1'), num('tf2'), num('tf3')] };
+    NUM.forEach(k => { o[k] = num(k); });
+    return o;
+  }
+  function setForm(raw) {
+    const s = CORE.withDefaults(raw);
+    NUM.forEach(k => { $(k).value = String(s[k]); });
+    $('rein').checked = !!s.rein; $('rc9').checked = s.rc9 === 1;
+    [1, 2, 3].forEach(i => { $('gop' + i).value = String(s.gop[i - 1]); $('tf' + i).value = String(s.tf[i - 1]); });
+    const D = CORE.DEFAULTS;
+    if (s.widthN !== D.widthN || s.heightN !== D.heightN || s.p03 !== D.p03 || s.srate !== D.srate || s.gop.some(g => g !== 50) || s.tf.some(t => t !== 3)) $('expert').open = true;
+    if (s.rc7f !== D.rc7f || s.rc11f !== D.rc11f || s.rc9 !== D.rc9 || s.rc10 !== D.rc10 || s.rc12 !== D.rc12) $('rcx').open = true;
+    onChange();
+  }
+  $('presets').addEventListener('click', e => { const b = e.target.closest('button[data-preset]'); if (b) setForm(PRESETS[b.dataset.preset]); });
+  $('form').addEventListener('input', onChange); $('form').addEventListener('change', onChange);
+  $('form').addEventListener('submit', e => e.preventDefault());
+
+  const fmtTick = (kb) => (kb / 1000).toFixed(kb % 500 ? 2 : 1).replace('.', ',');
+  function renderBar(sum) {
+    const ok = Number.isFinite(sum);
+    $('sumVal').textContent = ok ? fmtM(sum) : '–';
+    const lo = ok ? Math.min(4000, Math.max(0, Math.floor((sum - 500) / 500) * 500)) : 4000;
+    const hi = ok ? Math.max(5500, Math.ceil((sum + 500) / 500) * 500) : 5500;
+    const pos = (v) => Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100));
+    const fill = $('sumFill'); fill.style.width = (ok ? pos(sum) : 0) + '%';
+    fill.className = 'fill' + (ok && sum > 5250 ? ' bad' : ok && sum > 5050 ? ' warn' : '');
+    $('markOk').style.left = pos(5050) + '%'; $('markWall').style.left = pos(5250) + '%';
+    const span = hi - lo, step = span <= 2000 ? 500 : span <= 6000 ? 1000 : span <= 15000 ? 2500 : span <= 40000 ? 5000 : 20000;
+    const ticks = [];
+    for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) ticks.push([v, fmtTick(v), v === lo ? 'first' : v === hi ? 'last' : '']);
+    if (pos(5250) > 4 && pos(5250) < 96) ticks.push([5250, '5,25 Mauer', 'wall']);
+    ticks.sort((a, b) => a[0] - b[0]);
+    // Kollisionen nach Pixeln auflösen: die Mauer-Marke gewinnt gegen Zwischenwerte, erste und letzte bleiben
+    const W = $('ticks').clientWidth || 600, px = (v) => pos(v) / 100 * W, wide = (t) => t.length * 7.2;
+    const kept = [];
+    for (const t of ticks) {
+      const k = kept[kept.length - 1];
+      if (!k) { kept.push(t); continue; }
+      const gap = px(t[0]) - px(k[0]), needed = (wide(k[1]) + wide(t[1])) / 2 + 8 - (k[2] === 'first' ? wide(k[1]) / 2 : 0) - (t[2] === 'last' ? wide(t[1]) / 2 : 0);
+      if (gap >= needed) { kept.push(t); continue; }
+      if (t[2] === 'wall' && k[2] !== 'first') kept[kept.length - 1] = t;
+      else if (t[2] === 'last' && k[2] === 'wall') continue;
+      else if (t[2] === 'last') kept[kept.length - 1] = t;
+    }
+    $('ticks').innerHTML = kept.map(([v, t, c]) => '<span class="' + c + '" style="left:' + pos(v) + '%">' + t + '</span>').join('');
+  }
+  function onChange() {
+    state.built = null; renderResult(null);
+    const s = readForm(); const sum = s.video + s.audio;
+    renderBar(sum);
+    const notes = [], D = CORE.DEFAULTS, L = CORE.LIMITS;
+    const bad = (t) => notes.push(['bad', t]), warn = (t) => notes.push(['warn', t]), info = (t) => notes.push(['', t]);
+    const intIn = (v, [lo, hi]) => Number.isInteger(v) && v >= lo && v <= hi;
+    // technische Sperren (die einzigen, die den Bau verhindern)
+    if (!intIn(s.video, L.video)) bad('Videoziel: ganze Zahl 1 bis 858993 kbit/s (Video×5000 muss in 32 Bit passen).');
+    if (!intIn(s.audio, L.audio)) bad('Audio: 0 (aus) oder ganze Zahl bis 4294967 kbit/s.');
+    [['width', 'Breite PAL'], ['height', 'Höhe PAL'], ['widthN', 'Breite NTSC'], ['heightN', 'Höhe NTSC']].forEach(([k, n]) => { if (!intIn(s[k], L.size)) bad(n + ': ganze Zahl 1 bis 65535.'); });
+    if (!intIn(s.p03, L.pages) || !intIn(s.p04, L.pages)) bad('MG-Puffer: ganze Zahl 1 bis 65535 Seiten.');
+    if (!s.gop.every(g => intIn(g, L.gop))) bad('GOP: ganze Zahl ab 1 je LED.');
+    if (!intIn(s.srate, L.srate)) bad('Abtastrate: ganze Zahl in Hz.');
+    if (!intIn(s.rc7f, L.rcf) || s.video * s.rc7f > 4294967295) bad('Größentoleranz-Faktor: ganze Zahl, Video×Faktor muss in 32 Bit passen.');
+    if (!intIn(s.rc11f, L.rcf) || s.video * s.rc11f > 4294967295) bad('Transferraten-Faktor: ganze Zahl, Video×Faktor muss in 32 Bit passen.');
+    if (!intIn(s.rc10, L.rc10) || !intIn(s.rc12, L.rc12)) bad('Pufferbits ab 1, Startverzögerung ab 0.');
+    if (!s.tf.every(t => intIn(t, L.tf))) bad('TF: ganze Zahl 0 bis 127 je LED.');
+    if (notes.length) { $('notes').innerHTML = notes.map(([c, t]) => '<li class="' + c + '">' + esc(t) + '</li>').join(''); updateBuildButton(); return; }
+    // Hinweise aus Messungen und Datenblatt – sperren nichts
+    if (sum > 5250) warn('Summe über der gemessenen Host-Mauer von 5,25 Mbit/s (AE mit Stille lief bis 5,02 fünf Stunden). Erwartung: leere Bilder in Phasen; mit echtem Ton sicher Aussetzer. Für den Versuch erlaubt.');
+    else if (sum > 5050) warn('Summe über dem bewährten Niveau von 5,05 Mbit/s. Mit echtem Ton riskant; AE selbst liegt mit 384 kbit/s Ton rechnerisch bei 5,38 und brach ab.');
+    else info('Summe unter dem bewährten Niveau: rechnerisch ' + Math.round(sum / 5250 * 100) + ' % der Mauer.');
+    if (s.video > 10000) warn('Videoziel über dem MG-Datenblatt (64 kbit/s bis 10 Mbit/s). Der MG kann abweisen oder stillschweigend begrenzen; der Host wäre ohnehin weit über der Mauer.');
+    if (s.video < 3600) info('Unter 3600: der ColdFire setzt MG-Param 10 auf 1 statt 2 (so laufen die Original-Stufen mit 768/1200/1500). Anderer Encoder-Modus, kein Fehler.');
+    if (s.video < 64) warn('Videoziel unter dem MG-Minimum von 64 kbit/s.');
+    if (s.audio === 0) warn('Nur Video – geprüft 20.10. (VID00012): Aufnahme makellos (60 s, 5,25 Mbit/s, 0 Aussetzer), aber der ColdFire schreibt den Index unvollständig (nur die letzten ~120 Tabelleneinträge), die Datei spielt nicht. mp4_reparatur.py aus dem Test-Paket baut den Index neu (1 Befehl, geprüft). Alternative ohne Reparatur: Ton 8 kbit/s (Blöcke 21 Byte) – ungeprüft.');
+    else {
+      if (s.audio < 8 || s.audio > 384) warn('Ton ' + s.audio + ' kbit/s liegt außerhalb des MG-Datenblatts (8–384). Der MG kann abweisen oder begrenzen.');
+      if (s.audio >= 192) bad('Ton ' + s.audio + ' kbit/s: Blöcke über 450 Byte, der Tonpfad des ColdFire starb damit nach 20 s (VID00006/VID00007), unabhängig von der Videorate. Nur ohne Audiokabel brauchbar.');
+      else if (s.audio > 96) warn('Ton ' + s.audio + ': Blöcke von ' + Math.round(s.audio * 1000 * 1024 / 48000 / 8) + ' Byte, am Gerät ungeprüft (96 = 256 Byte hält, 192 = 512 Byte nicht).');
+      else if (!CORE.AUDIO_OK.includes(s.audio)) info('Ton ' + s.audio + ' kbit/s: Zwischenwert, der MG nimmt jede Zahl in Bit/s als Langzeit-Bitrate; Blöcke um ' + Math.round(s.audio * 1000 * 1024 / 48000 / 8) + ' Byte.');
+      if (s.audio < 192 && s.video > 4600) warn('Mit echtem Ton kippte das Video bei 5000 + 96 (VID00008) ab etwa 4,9 Mbit/s realer Rate; 4500 + 96 lief mit 99 % Ton. Reserve einplanen.');
+    }
+    const sizeNotes = (w, h, srcW, srcH, norm, tested) => {
+      if (w === srcW && h === srcH) return;
+      if (w <= 16 || h <= 16) warn(norm + ': Werte 1–16 liest der MG als Teiler, nicht als Pixel (2 = halbe Größe auf ein Vielfaches von 16).');
+      if (w > srcW || h > srcH) warn(norm + ': ' + w + '×' + h + ' ist größer als die Quelle (' + srcW + '×' + srcH + '). Laut MG-Handbuch muss der Zielwert kleiner als das Bild sein; der MG kann nicht hochskalieren.');
+      if (w !== srcW) {
+        if (w % 16) warn(norm + ': Breite ' + w + ' ist kein Vielfaches von 16. H.264 arbeitet in 16er-Blöcken, der MG rundet oder meldet „unsupported horizontal decimation“.');
+        if (!tested.includes(w) && w > 16 && w < srcW) info(norm + ': Breite ' + w + ' ist am Gerät ungeprüft (bestätigt: 720, 528' + (norm === 'PAL' ? '' : ' nur PAL') + '). Der MG hat eigene Filtertabellen für 720, 640, 360 und 180, sonst den allgemeinen Skalierer (528 lief damit sauber).');
+      }
+      if (h !== srcH) {
+        if (h % 16) warn(norm + ': Höhe ' + h + ' ist kein Vielfaches von 16 (bei Halbbildern 32).');
+        warn(norm + ': Höhe ' + h + ' statt ' + srcH + ' ist am Gerät ungeprüft. Der MG skaliert senkrecht; bei Zeilensprung-Quelle ohne Halbbild-Verwurf (der ColdFire setzt INT_TO_PROG_SCALE nicht) ist Kammbildung oder Halbbild-Kodierung mit halber Höhe möglich. Die Original-Stufe LED1 lieferte 320×240 aus 576i, der Weg geht grundsätzlich.');
+      }
+    };
+    sizeNotes(s.width, s.height, 720, 576, 'PAL', [720, 528]);
+    sizeNotes(s.widthN, s.heightN, 720, 480, 'NTSC', [720]);
+    if (s.widthN !== s.width) info('NTSC-Breite ' + s.widthN + ' ≠ PAL-Breite ' + s.width + ': die RC-Erweiterung prüft eine gemeinsame Breite (' + s.width + '), NTSC läuft dann ohne RC-Erweiterung – wie alle bisherigen 528er-Builds.');
+    if (s.gop.some(g => g !== 50)) info('GOP ' + s.gop.join('/') + ' statt 50: am Gerät ungeprüft. Gemessen am AE-Material: I-Bilder sind 4 % der Bits, GOP ändern bewegt 1–2 %. Kurze GOP = robuster gegen Aussetzer, lange = etwas kleinere Datei.');
+    if (s.srate !== 48000) {
+      const blk = s.audio ? Math.round(s.audio * 1000 * 1024 / s.srate / 8) : 0, ps = (s.srate / 1024).toFixed(1).replace('.', ',');
+      bad('Abtastrate ' + s.srate + ' Hz: am Gerät geprüft 20.10. (VID00011, 32000): der 256×fs-Takt kommt von außen und bleibt bei 48 kHz. Der MG bekommt 1,5× mehr Abtastwerte als eingestellt, läuft über und reißt das Video mit (50 % der Bilder leer/klein, Bitstromfehler, 23 s Bilder fehlen), Ton 1,5× zu langsam und ab 4 s tot. Kopfangaben (stsd/mdhd/AAC-Konfig) schreibt der ColdFire zwar richtig, aber der Wert ist kein Hebel – nur für weitere Versuche.' + (s.audio ? ' Blöcke rechnerisch ' + blk + ' Byte, ' + ps + ' je Sekunde.' : ''));
+      if (![22050, 24000, 32000, 44100, 48000].includes(s.srate)) warn('Abtastrate ' + s.srate + ' steht nicht in der MG-Liste (22050, 24000, 32000, 44100, 48000).');
+    }
+    const rcLine = 'RC7 = ' + (s.video * s.rc7f).toLocaleString('de-DE') + ' Bit (±' + (s.rc7f / 1000).toLocaleString('de-DE') + ' s Video)';
+    $('rcInfo').textContent = rcLine + ' · RC11 = ' + (s.video * s.rc11f).toLocaleString('de-DE') + ' Bit/s' + (s.rc9 ? ' · Puffer ' + (s.rc10 / 1000).toLocaleString('de-DE') + ' kBit = ' + (s.rc10 / (s.video * 1000)).toFixed(2).replace('.', ',') + ' s, Start ' + (s.rc12 / 90).toFixed(0) + ' ms' : ' · Puffer-Regelung aus (wie AE LED1)');
+    if (s.rc7f !== 5000) warn('Größentoleranz ×' + s.rc7f + ' statt ×5000: ungeprüft. Kleiner = die Größenregelung zieht Ausreißer schneller zurück, Spitzen werden flacher; sehr klein (unter ×500 = 0,5 s) kann die Bildqualität bei Bewegung sichtbar schwanken.');
+    if (s.rc11f !== 1000) warn('Transferrate ×' + s.rc11f + ' statt ×1000: ungeprüft; wirkt nur mit Puffer-Regelung (Abflussrate des Leaky-Bucket).');
+    if (s.rc9) warn('Puffer-Regelung an: LED1 bekommt das Leaky-Bucket-Modell. AB lief so (1,25 MBit, 5 Mbit/s, 125 ms, am Gerät geprüft), AE hat es für LED1 abgeschaltet und nur die Größenregelung behalten. Der MG hält damit die Rate über das Pufferfenster unter der Transferrate – das Modell für den begrenzten USB-Pfad; andere Werte als die von AB sind ungeprüft.');
+    if (s.p03 !== 2048) warn('Videopuffer p03 ' + s.p03 + ' Seiten: AB lief mit 832, sonst ungeprüft.');
+    if (s.p04 !== 48) warn('Audiopuffer p04 ' + s.p04 + ' Seiten: ungeprüft am Gerät.');
+    if (s.p03 + s.p04 > 2304) warn('p03 + p04 = ' + (s.p03 + s.p04) + ' Seiten übersteigt den belegten Speicherplan (2048 + 256 passten in der Emulation, 5025 von 5120 Seiten). Der MG könnte nicht starten.');
+    if (s.rein) info('AE rein: LED2/LED3 am Gerät noch ungeprüft, LED1 bleibt wie AE.');
+    if (s.tf.some(t => t > 3)) warn('TF über 3: bekannt sind die Stufen 0–3; größere Werte sind ungeprüft, der MG kann sie begrenzen oder abweisen.');
+    else if (s.tf.some(t => t !== 3)) warn('TF unter 3: mehr Rauschen im Bild, höherer Bitbedarf bei gleichem Ziel.');
+    $('notes').innerHTML = notes.map(([c, t]) => '<li class="' + c + '">' + esc(t) + '</li>').join('');
+    updateBuildButton();
+  }
+
+  // ---------- Schritt 3: Bauen ----------
+  function updateBuildButton() {
+    const ok = !!(state.chosen && state.chosen.id && state.chosen.id.base);
+    $('build').disabled = !ok;
+    $('buildHint').textContent = ok ? 'Basis: ' + (state.chosen.id.kind === 'orig' ? 'Original → AE' : 'AE') + ' aus ' + state.chosen.name : 'Zuerst oben eine Firmware laden.';
+  }
+  $('build').addEventListener('click', () => {
+    const s = readForm(); const res = $('result'); res.hidden = false;
+    try {
+      const id = state.chosen.id;
+      const b = CORE.build(id.base, s);
+      state.built = { s, b, label: CORE.label(s), base: id.base, orig: id.orig };
+      renderResult(state.built);
+    } catch (e) {
+      state.built = null;
+      res.innerHTML = '<div class="status bad"><strong>Bau abgebrochen</strong>' + esc(e.message) + '</div>';
+    }
+  });
+  function renderResult(built) {
+    const res = $('result');
+    if (!built) { res.hidden = true; res.innerHTML = ''; return; }
+    const { b, s, label } = built;
+    const known = b.known;
+    const badge = known ? (known.status.startsWith('am Gerät') || known.status.startsWith('LED1') ? '<span class="badge ok">' + esc(known.name + ' · ' + known.status) + '</span>' : '<span class="badge warn">' + esc(known.name + ' · ' + known.status) + '</span>')
+      : '<span class="badge warn">neue Kombination · 0 Hardwaretests</span>';
+    let html = '<div class="head"><div class="label">' + esc(label) + '</div>' + badge + '</div>' +
+      '<span class="hash" style="margin-top:10px">SHA-256 ' + b.sha + '</span>' +
+      '<p class="small muted" style="margin-top:8px">' + (b.patches.length ? b.patches.length + ' Werte geändert, sonst byteidentisch mit AE. Summe Video + Ton ' + fmtM(s.video + s.audio) + '.' : 'Keine Änderung gegenüber AE.') + '</p>';
+    if (b.patches.length) {
+      html += '<div class="tablewrap"><table><thead><tr><th class="mono">Offset</th><th>Wert</th><th class="mono">alt</th><th class="mono">neu</th></tr></thead><tbody>' +
+        b.patches.map(p => '<tr><td class="mono">' + CORE.at(p.o) + '</td><td>' + esc(p.name) + '</td><td class="mono">' + p.old + '</td><td class="mono">' + p.neu + '</td></tr>').join('') + '</tbody></table></div>';
+    }
+    html += '<div class="actions"><button class="btn primary" type="button" id="save">ZIP speichern: PVT_' + esc(label) + '.zip</button><span id="saveMsg" class="muted"></span></div>' +
+      '<p class="small muted" style="margin-top:8px">Inhalt: <code>01_INSTALL_' + esc(label) + '/CFUPDATE.BIN</code>' + (label === 'AE' ? '' : ', <code>02_RETURN_AE/CFUPDATE.BIN</code>') + ', <code>0' + (label === 'AE' ? '2' : '3') + '_RETURN_ORIGINAL/CFUPDATE.BIN</code>, <code>README_DE.txt</code>, <code>SHA256SUMS.txt</code>.</p>';
+    res.innerHTML = html; res.hidden = false;
+    $('save').addEventListener('click', saveZip);
+  }
+  function readme(built) {
+    const { s, b, label } = built; const sum = s.video + s.audio;
+    const k = b.known;
+    return ['PVT FIRMWARE-BAUKASTEN - ' + label, 'Erzeugt am ' + new Date().toLocaleString('de-DE') + ' aus ' + state.fileName + ' (' + (state.chosen.id.kind === 'orig' ? 'Original 01.00.46.03 -> AE' : 'AE-Basis') + ').',
+      'Basis: AE (Vorfuehrstand), Original-Update 01.00.46.03. Nur Zahlenwerte geaendert, kein neuer Code.',
+      '', 'EINSTELLUNGEN',
+      '  Videoziel        ' + s.video + ' kbit/s', (s.audio === 0 ? '  Ton              AUS - MG nur Video (ENC_INPUT_SELECT/ENC_AV_SELECT = 2), Audioanforderung bleibt 384 (wirkungslos)' : '  Audioanforderung ' + s.audio + ' kbit/s (AAC, MG-Objekt 3 / Opcode 41)'),
+      '  Bildgroesse PAL  ' + s.width + ' x ' + s.height + (s.height === 576 ? 'i (Halbbilder)' : ' (MG skaliert senkrecht, ungeprueft)') + (s.width !== 720 ? ' - MG skaliert waagerecht' : ''),
+      '  Bildgroesse NTSC ' + s.widthN + ' x ' + s.heightN + (s.widthN !== s.width ? ' (Breite != PAL: NTSC ohne RC-Erweiterung)' : ''),
+      '  GOP-Laenge       LED1 ' + s.gop[0] + ' / LED2 ' + s.gop[1] + ' / LED3 ' + s.gop[2] + ' Bilder (AE 50)',
+      '  Ratenregelung    RC7 Groessentoleranz = Video x ' + s.rc7f + ' = ' + (s.video * s.rc7f) + ' Bit; RC11 Transferrate = Video x ' + s.rc11f + ' = ' + (s.video * s.rc11f) + ' Bit/s;',
+      '                   LED1 Puffer-Regelung ' + (s.rc9 ? 'AN, Pufferbits ' + s.rc10 + ', Startverzoegerung ' + s.rc12 + ' Ticks' : 'aus (AE)') + (s.rein ? ' - LED2/LED3 uebernehmen alles' : ' - LED2/LED3 wie AE (Puffer 5/10 MBit, Start 0,5/1 s)'),
+      '  Abtastrate       ' + s.srate + ' Hz' + (s.srate !== 48000 ? ' (ungeprueft: MG-Parameter, Host-Konfiguration und MP4-Vorlage gemeinsam gesetzt; Takt von aussen und AAC-Konfigbyte offen - pvt_check Zeile Abtastrate)' : ' (AE)'),
+      '  MG-Puffer        Video p03 = ' + s.p03 + ' Seiten (' + s.p03 * 2 + ' KB), Audio p04 = ' + s.p04 + ' Seiten (' + s.p04 * 2 + ' KB)',
+      '  LED2/LED3        ' + (s.rein ? 'wie LED1 (AE rein)' : 'wie AE (LED2 Modell 5 Mbit/0,5 s, LED3 10 Mbit/1 s)'),
+      '  TF-Stufe         LED1 ' + s.tf[0] + ' / LED2 ' + s.tf[1] + ' / LED3 ' + s.tf[2],
+      '  Summe Video+Ton  ' + fmtM(sum) + ' (gemessene Host-Mauer 5,25; bewaehrt <= 5,05)' + (sum > 5250 ? ' - UEBER DER MAUER, Versuch' : ''),
+      '', 'STAND', '  ' + (k ? k.name + ': ' + k.status : 'Neue Kombination, 0 Hardwaretests.'),
+      '  Freigabe fuer lange Laeufe erst nach 30 min mit Ton und einem 4-GiB-Wechsel.',
+      '', 'GEAENDERTE WERTE (Datei-Offset, alt -> neu)', ...(b.patches.length ? b.patches.map(p => '  ' + CORE.at(p.o) + '  ' + String(p.old).padStart(10) + ' -> ' + String(p.neu).padStart(10) + '  ' + p.name) : ['  keine (identisch mit AE)']),
+      '', 'DATEIEN', '  01_INSTALL_' + label + '/CFUPDATE.BIN   SHA-256 ' + b.sha,
+      ...(label === 'AE' ? [] : ['  02_RETURN_AE/CFUPDATE.BIN         SHA-256 ' + CORE.H_AE]),
+      '  0' + (label === 'AE' ? '2' : '3') + '_RETURN_ORIGINAL/CFUPDATE.BIN   SHA-256 ' + CORE.H_ORIG,
+      '', 'EINSPIELEN', '  1. Nur EINE CFUPDATE.BIN ins Hauptverzeichnis eines leeren FAT32-Sticks. Keine MGUPDATE.BIN, keine custom.txt/best.txt.',
+      '  2. PVT aus, Netzteil und Geraete trennen, Stick rein, Netzteil dran - das PVT startet selbst.',
+      '  3. USB-LED rot + MODE-LEDs blau blinkend = Update laeuft. Nichts trennen.',
+      '  4. Alle LEDs blinken blau, dann Standby. MODE kurz druecken; Stick erst ziehen, wenn die USB-LED blau leuchtet.',
+      '  5. 1-2 min auf LED1 aufnehmen, mit pvt_check.py pruefen: leer = 0, Ton minus Video < 0,2 s.', ...(s.audio === 0 ? ['  Nur Video: die Datei spielt erst nach  python3 mp4_reparatur.py VID0000x.MP4  (Index neu bauen, Test-Paket).'] : []),
+      '', 'Experimentelle Firmware. Keine Herstellerfreigabe. Die Rueckkehrdatei hilft nur bei funktionierendem Updatepfad; Backups/Dumps behalten.', ''].join('\n');
+  }
+  async function saveZip() {
+    const built = state.built; if (!built) return;
+    const msg = $('saveMsg'); const btn = $('save'); btn.disabled = true; msg.textContent = 'Packe …';
+    try {
+      const { b, label } = built, dir = 'PVT_' + label + '/';
+      const files = [{ name: dir + '01_INSTALL_' + label + '/CFUPDATE.BIN', data: b.bytes }];
+      if (label !== 'AE') files.push({ name: dir + '02_RETURN_AE/CFUPDATE.BIN', data: built.base });
+      files.push({ name: dir + '0' + (label === 'AE' ? '2' : '3') + '_RETURN_ORIGINAL/CFUPDATE.BIN', data: built.orig });
+      files.push({ name: dir + 'README_DE.txt', data: readme(built) });
+      files.push({ name: dir + 'SHA256SUMS.txt', data: files.filter(f => f.name.endsWith('.BIN')).map(f => CORE.sha256(f.data) + '  ' + f.name.slice(dir.length)).join('\n') + '\n' });
+      const zip = CORE.makeZip(files); const fname = 'PVT_' + label + '.zip';
+      const dl = await dlReady;
+      if (dl) {
+        msg.textContent = 'Bitte das Speichern bestätigen …';
+        try { await dl.save({ filename: fname, data: new Blob([zip]) }); msg.textContent = 'Gespeichert: ' + fname; }
+        catch (e) {
+          if (e && e.code === 'declined') msg.textContent = 'Speichern abgebrochen.';
+          else if (e && e.code === 'rate_limited') msg.textContent = 'Es ist noch eine Abfrage offen. Kurz warten, dann erneut.';
+          else msg.textContent = 'Speichern hier nicht möglich (' + (e && e.message ? e.message : e) + '). Seite als HTML sichern und lokal im Browser öffnen, dort geht der Download direkt.';
+        }
+      } else {
+        const url = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
+        const a = document.createElement('a'); a.href = url; a.download = fname; document.body.appendChild(a); a.click();
+        setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 2000);
+        msg.textContent = 'Download gestartet: ' + fname + ' (' + Math.round(zip.length / 1024) + ' KB)';
+      }
+    } catch (e) { msg.textContent = 'Fehler: ' + e.message; }
+    btn.disabled = false;
+  }
+
+  // ---------- Bekannte Builds ----------
+  $('knownTable').querySelector('tbody').innerHTML = CORE.KNOWN.map(k => '<tr><td>' + esc(k[1]) + '</td><td>' + esc(k[2]) + '</td><td class="mono">' + k[0].slice(0, 16) + '…</td></tr>').join('');
+  onChange();
+})();
+
+</script>
+</body>
+</html>

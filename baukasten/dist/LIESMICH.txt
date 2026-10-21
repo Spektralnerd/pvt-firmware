@@ -1,0 +1,31 @@
+PVT FIRMWARE-BAUKASTEN 1.5 (21.10.2026, 07:30)
+
+PVT_Firmware_Baukasten.html im Browser oeffnen (Doppelklick; Firefox oder Chromium).
+Keine Installation, kein Server, keine Internetverbindung noetig. Nur die Schriften
+kommen bei Online-Betrieb von Google Fonts, offline nimmt der Browser Ersatzschriften.
+
+1. Original-Update-ZIP (PVT1.00.46.03.zip), ein Projekt-Paket oder eine CFUPDATE.BIN
+   in das Feld ziehen. Der Baukasten prueft die SHA-256 und macht aus dem Original
+   den Stand AE (Hash-geprueft).
+2. Einstellungen waehlen oder ein Preset druecken. Die Summe Video + Ton wird gegen
+   die 5,25-Mbit/s-Mauer angezeigt.
+3. "Firmware bauen", dann "ZIP speichern". Das ZIP enthaelt 01_INSTALL_<Name>/CFUPDATE.BIN,
+   die Rueckkehrdateien (AE, Original), README_DE.txt und SHA256SUMS.txt.
+
+Es werden nur Zahlenwerte an bekannten Stellen geaendert (wie build_ag/ah/ai.py),
+jeweils mit Pruefung des Befehlsworts davor. Jede neue Kombination hat 0 Hardwaretests.
+
+Seit 1.3 sind alle Werte frei: Video, Ton, Bildgroesse PAL (Breite und Hoehe), im
+Experten-Teil NTSC-Bildgroesse, Videopuffer p03, GOP je LED, Abtastrate (1.4), TF je LED;
+seit 1.5 die Ratenregelung des MG: Groessentoleranz RC7 (Faktor x Video), Transferrate RC11,
+Puffer-Regelung RC9/RC10/RC12 fuer LED1 (Leaky Bucket, wie bei AB). Gesperrt ist
+nur, was technisch nicht in die Stellen passt (ganze Zahlen, 32 Bit, moveq-Byte 0..127).
+Datenblatt- und Messgrenzen erscheinen als Hinweise, bauen laesst sich trotzdem alles.
+Hashes der bekannten Builds stehen in der Seite unter "Bekannte Builds".
+
+Neu in 1.2: Ton "aus (nur Video)". Ein Byte (0x0C363, 1 -> 2) schaltet den MG auf
+ENC_AV_SELECT = VIDEO_ONLY; der ColdFire bekommt dann keine Tonbloecke. Am Geraet
+ungeprueft (2-Minuten-Test), Rueckkehrdateien liegen bei.
+
+Wird die Seite als Artefakt auf claude.ai geoeffnet, laeuft das Speichern ueber eine
+Bestaetigungsabfrage; lokal geoeffnet startet der Download direkt.

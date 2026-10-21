@@ -1,0 +1,108 @@
+==============================================================================
+VID00010.MP4
+==============================================================================
+Datei:      67.566.011 Byte, Marke 'mobi', moov am Ende
+Video:      avc1 Main, 528x576, 2.936 Bilder, 117,440 s, 4,503 Mbit/s
+            Halbbilder (field_pic) in 2.936 von 2.936 Bildern
+Container:  avc1 528x576, tkhd 528x576 (Anzeigegroesse)
+SPS:        528x576, Pixel 16:11 -> Anzeige 768x576 (1.333:1, 4:3 = 1.333)
+Audio:      mp4a 48000 Hz, 5.457 Bloecke, 116,416 s, 95,4 kbit/s
+Zeitachsen: Ton minus Video = -1,024 s  [AUFFAELLIG]
+            mdhd Video 119,560 s / stts 117,440 s
+Schluesselbilder: 59, Abstaende 1,36, 1,56, 1,80, 1,96, 2,00, 3,20 s
+Videorate je Sekunde (erste 12 s): 4,57 4,35 4,32 4,54 4,65 4,69 4,40 4,17 4,67 4,80 4,03 4,61
+Hoechstes Fenster: 0,2 s = 9,10 Mbit/s, 1 s = 5,98 Mbit/s (Medienzeit, nicht USB)
+QP (Slice): 23..27, Mittel 26,39
+
+Wiederholungen / Aussetzer:
+  leer (alle Makrobloecke uebersprungen): 19
+  sehr klein (< 1000 Byte):              42
+  Teilbild (< 40 % des Medians):          13
+  ('leer' = exakte Wiederholung; 'sehr klein'/'Teilbild' = Verdacht, nur in bewegtem Umfeld)
+  erstes auffaelliges Bild: 86,04 s (Bild 2151), nach 48,397 MB Videodaten (Dateiposition 49,416 MB)
+  letztes auffaelliges Bild: 95,60 s
+  alle:
+      Zeit    Bytes  QP  Klasse  Videodaten davor  Skip-Run (je Slice)
+     86,04    1.433  27  teil          48,397 MB  355/8
+     86,12      423  26  klein         48,426 MB  2/8
+     86,68    4.848  27  teil          48,791 MB  0/0
+     86,76    2.120  27  teil          48,817 MB  7/10
+     86,84      798  27  klein         48,841 MB  7/10
+     87,64    4.630  27  teil          49,337 MB  0/1
+     87,72    1.854  27  teil          49,362 MB  0/2
+     87,92    2.019  26  teil          49,464 MB  18/5
+     88,08    1.573  26  teil          49,553 MB  10/1
+     88,32    1.780  26  teil          49,688 MB  18/2
+     88,40      442  26  klein         49,717 MB  147/5
+     88,88    1.566  27  teil          50,045 MB  12/5
+     88,96      917  27  klein         50,069 MB  12/5
+     89,04      751  26  klein         50,092 MB  12/5
+     89,12    2.619  26  teil          50,121 MB  6/2
+     89,20      316  25  klein         50,159 MB  6/32
+     89,60    2.310  26  teil          50,451 MB  1/4
+     89,68      615  26  klein         50,480 MB  15/15
+     89,80      448  26  klein         50,535 MB  4/1
+     89,88       24  24  leer          50,576 MB  594/594
+     90,04       43  25  klein         50,714 MB  386/594
+     90,32       78  26  klein         50,921 MB  98/35
+     90,44       24  25  leer          50,992 MB  594/594
+     90,52       40  25  klein         51,027 MB  230/594
+     90,60       50  24  klein         51,069 MB  594/457
+     90,64       24  24  leer          51,069 MB  594/594
+     90,72       24  24  leer          51,110 MB  594/594
+     91,04      284  26  klein         51,380 MB  113/0
+     91,12       96  26  klein         51,409 MB  117/0
+     91,24    1.870  26  teil          51,470 MB  0/0
+     91,44       37  24  klein         51,613 MB  360/594
+     91,52       24  24  leer          51,654 MB  594/594
+     91,64       73  24  klein         51,736 MB  261/360
+     91,76       24  24  leer          51,819 MB  594/594
+     91,84       37  24  klein         51,860 MB  296/594
+     91,92       24  24  leer          51,901 MB  594/594
+     92,00       24  24  leer          51,942 MB  594/594
+     92,08       24  24  leer          51,984 MB  594/594
+     92,16       40  24  klein         52,025 MB  594/296
+     92,24       24  23  leer          52,073 MB  594/594
+     92,36       24  24  leer          52,170 MB  594/594
+     92,44       24  25  leer          52,206 MB  594/594
+     92,48       79  25  klein         52,206 MB  329/99
+     92,72      600  25  klein         52,379 MB  2/19
+     92,80       57  25  klein         52,416 MB  456/329
+     92,88       24  25  leer          52,451 MB  594/594
+     92,96       40  25  klein         52,487 MB  457/594
+     93,04       60  25  klein         52,523 MB  32/594
+     93,20       70  25  klein         52,613 MB  255/255
+     93,28       46  24  klein         52,654 MB  428/594
+     93,36       24  24  leer          52,695 MB  594/594
+     93,48      163  24  klein         52,778 MB  393/287
+     93,52       24  24  leer          52,778 MB  594/594
+     93,56       24  24  leer          52,778 MB  594/594
+     93,64       43  24  klein         52,819 MB  326/594
+     93,72       42  24  klein         52,861 MB  594/428
+     93,80       71  24  klein         52,902 MB  428/395
+     93,88       45  24  klein         52,943 MB  594/360
+     94,08       24  24  leer          53,122 MB  594/594
+     94,20      250  25  klein         53,198 MB  68/37
+     94,28      102  25  klein         53,234 MB  66/100
+     94,36       24  25  leer          53,270 MB  594/594
+     94,44       78  25  klein         53,306 MB  98/32
+     94,52       35  25  klein         53,341 MB  594/296
+     94,60       24  25  leer          53,377 MB  594/594
+     94,68       54  24  klein         53,418 MB  254/296
+     94,76       60  24  klein         53,460 MB  296/594
+     94,84       39  24  klein         53,501 MB  294/594
+     94,92       43  24  klein         53,542 MB  286/594
+     95,00       64  24  klein         53,584 MB  358/461
+     95,08       47  23  klein         53,632 MB  286/594
+     95,44    1.480  26  teil          53,957 MB  1/2
+     95,52      241  26  klein         53,987 MB  1/2
+     95,60      102  26  klein         54,015 MB  1/2
+
+Audio/Video in Dateireihenfolge: Grundversatz -0,032 s
+  keine Videopausen ueber 0,1 s
+  Versatz je 10 s: 0 s: -0,04, 10 s: -0,04, 20 s: -0,03, 30 s: -0,03, 40 s: -0,02, 50 s: -0,04, 60 s: -0,03, 70 s: -0,03, 80 s: -0,23, 90 s: -0,76, 100 s: -1,03, 110 s: -1,03
+Ton je Sekunde (Soll 46,9 Bloecke/s): erstes Loch bei 81 s, 5 von 117 Sekunden unvollstaendig
+  0:46 1:47 2:47 3:47 4:47 5:47 6:47 7:47 8:46 9:47 10:47 11:47 12:47 13:47 14:47 15:47 16:46 17:47 18:47 19:47 20:47 21:47 22:47 23:47 24:46 25:47 26:47 27:47 28:47 29:47 30:47 31:47 32:46 33:47 34:47 35:47 36:47 37:47 38:47 39:47 40:46 41:47 42:47 43:47 44:47 45:47 46:47 47:47 48:46 49:47 50:47 51:47 52:47 53:47 54:47 55:47 56:46 57:47 58:47 59:47 ...
+
+WARNUNG: Ton 1,024 s kuerzer als Video.
+WARNUNG: Video-mdhd (119,560 s) passt nicht zur Sampletabelle stts (117,440 s).
