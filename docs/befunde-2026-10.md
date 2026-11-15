@@ -1437,3 +1437,12 @@ Modell auch p04 = 48 beim Start nur zu ~80 % voll geworden – der Beweis für d
 steht also noch aus (Messlauf B mit der Schleife auf altem Pegel). Vorher: Wackelkontakt im
 USB-Kabel der Platte am PC (Lesefehler, Platte kam als neues Gerät zurück, FAT nur noch lesbar);
 Kabel getauscht. Bericht: `docs/berichte/TEST1_V3800_A192_B528_P256_REIN_pvtcheck.txt`.
+
+**33.8 Messlauf 8000 + 192 (15.11., 14:06): Absturz nach Sekunden.** Nutzerbericht: Aufnahme
+stirbt nach wenigen Sekunden, rotes Blinken, die PVT initialisiert die Platte neu; keine Datei.
+Gegenstück AF8 (8000, Stille, p04 48, 720 breit) lief im Oktober 140 s mit verworfenen Bildern
+durch. Ob der neue Lauf mit oder ohne Audiokabel war, ist offen (nachgefragt). Nutzer: Kabel ist
+nicht die Ursache; die PVT hat nur USB 1.1, oberhalb der Mauer gibt es keinen Spielraum.
+Folgerung: keine Überlastläufe mehr (Ordner 02/03 des Pakets verworfen). Weiter von unten:
+Test 1 noch einmal mit der Schleife auf altem Pegel, dann 30 min; mehr Video nur in kleinen
+Schritten (z. B. 4200 + 192).
