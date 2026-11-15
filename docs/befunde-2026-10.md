@@ -1446,3 +1446,32 @@ nicht die Ursache; die PVT hat nur USB 1.1, oberhalb der Mauer gibt es keinen Sp
 Folgerung: keine Überlastläufe mehr (Ordner 02/03 des Pakets verworfen). Weiter von unten:
 Test 1 noch einmal mit der Schleife auf altem Pegel, dann 30 min; mehr Video nur in kleinen
 Schritten (z. B. 4200 + 192).
+
+**33.9 Messlauf A, 8000 + 192 ohne Audiokabel (15.11., 14:20).** Nutzer hat die Platte im
+laufenden Betrieb kurz vor dem erwarteten Absturz gezogen: `VID00001.MP4`, 20,32 MB, ftyp +
+mdat (Größe eingetragen) + **abgeschnittener moov** (15.635 B laut Kopf, 2.531 B vorhanden). Die
+PVT war also schon beim Abschließen. Ein zweiter Versuch hinterließ `VID00002.MP4` und
+`VID00002.MUX` mit je 0 Byte – die PVT führt während der Aufnahme eine `.MUX`-Begleitdatei
+(vermutlich die Index-Tabellen) und trägt Größen erst beim Abschluss ein; nach einem Absturz
+bleiben beide als verwaiste Ketten (die 64 FSCK-REC-Dateien von 14:13).
+Auswertung ohne Index (`docs/analyse/mdat_bildweise.py`: Bild = [PPS] + zwei Halbbild-Slices,
+Ton = Lücken; an Test 1 gegen den echten Index geprüft, 3128/3128 Bilder):
+- 496 Bilder (wie stts/stsz-Kopf), 85 leer; Ton 1316 Blöcke = 28,07 s (mvhd), Stille ~58 B/Block.
+- Die ersten 218 Bilder (8,72 s) sind vollständig, Erzeugung 7,94 Mbit/s; danach leere und
+  verworfene Bilder (rund 40 % Bildverlust) – der 4-MB-Videopuffer p03 ist voll.
+- **Schreibrate in der Sättigung 5,1 Mbit/s** (10–27 s Medienzeit, Zeitachse aus Tonbytes,
+  ±3 %) – die bekannte USB-1.1-Mauer (AF8: 5,25), unverändert mit p04 256 und Breite 528.
+- Startverzögerung, falls das erste leere Bild „p03 voll“ bedeutet: **rund 2 s** (bei W 5,0–5,5:
+  1,6–2,2 s) statt 3,8–4,0 s in VID00007/08/10 – auf der frisch geprüften und geleerten Platte.
+  Stützt die Vermutung „τ0 hängt vom Plattenzustand ab“; nicht bewiesen.
+- **Index kaputt:** stsz nennt 496 Einträge, aber nur die ersten 118 sind echt – und das sind die
+  Größen der Bilder 378–495 (ab 19,5 s Medienzeit). Danach Füllmüll aus dem moov-Puffer (Kennungen
+  `stsc`, `stco`, `soun`, Chunk-Offsets ab dem Offset von Bild 378). Gleiches Muster wie VID00012
+  (nur die letzten ~120 Einträge). Hypothese: unter Volllast gehen die ausgelagerten Teile der
+  Index-Tabellen verloren, nur der letzte RAM-Puffer bleibt; der Abschluss mit diesem Index ist
+  wahrscheinlich der Absturz (rotes Blinken, Platte neu eingebunden). AF8 (8000, Stille, p04 48,
+  720) hatte trotz 140 s Sättigung einen vollständigen Index – der Auslöser ist also nicht die
+  Sättigung allein; offen.
+- `pvt_check.py` meldet abgeschnittene/unstimmige Indizes jetzt mit Klartext statt Traceback.
+Folgerung: oberhalb der Mauer verliert die PVT nicht nur Bilder, sondern auch die Datei. Nach
+jedem Absturz `fsck.fat -a` und die REC-/0-Byte-Dateien löschen.

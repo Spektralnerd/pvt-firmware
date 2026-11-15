@@ -1179,6 +1179,12 @@ def main(argv=None):
         except (Mp4Error, OSError, ValueError) as e:
             print("=" * 78 + "\n%s\nFEHLER: %s" % (os.path.basename(p), e))
             results.append({"datei": os.path.basename(p), "fehler": str(e)})
+        except (struct.error, IndexError, KeyError, ZeroDivisionError) as e:
+            # v1.7: abgeschnittener oder unstimmiger Index (Aufnahme nicht sauber abgeschlossen)
+            msg = ("Index (moov) unvollstaendig oder unstimmig - die Aufnahme wurde nicht sauber abgeschlossen "
+                   "(Absturz, Platte gezogen, Ueberlast). Die Bilddaten (mdat) sind meist noch da. (%s: %s)" % (type(e).__name__, e))
+            print("=" * 78 + "\n%s\nFEHLER: %s" % (os.path.basename(p), msg))
+            results.append({"datei": os.path.basename(p), "fehler": msg})
     if len(results) > 1:
         table = summary_table(results)
         print(table)
