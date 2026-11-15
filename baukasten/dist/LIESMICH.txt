@@ -1,4 +1,4 @@
-PVT FIRMWARE-BAUKASTEN 1.6 (15.11.2026)
+PVT FIRMWARE-BAUKASTEN 1.6.1 (15.11.2026, 15:00)
 
 PVT_Firmware_Baukasten.html im Browser oeffnen (Doppelklick; Firefox oder Chromium).
 Keine Installation, kein Server, keine Internetverbindung noetig. Nur die Schriften
@@ -31,8 +31,15 @@ Neu in 1.6 (15.11.2026): Hinweise nach der Neuauswertung der Aufnahmen berichtig
 - Mit echtem Ton schaffte der Host nur 4,2-4,45 Mbit/s Summe (ohne Ton 5,25).
 - Puffer-Regelung: nicht das kleine Modell (1,25 MBit/125 ms; 6-13 % Videozeit-Verlust
   bei AC/AD), sondern 5 MBit/45000 oder 10 MBit/90000 wie AE LED2/LED3.
-- Vorlagen: Test 1 (528, 3800, Ton 192, p04 256) und zwei Messlaeufe (8000 + Ton 192
-  bzw. 32, p04 256) fuer den Durchsatz mit Ton.
+- Vorlagen: geprueften Stand "Mit Ton" (528, 3800, Ton 192, p04 256) und naechster Test
+  (528, 4800, Ton 192, p04 256).
+
+1.6.1 (15.11., 15:00): Ergebnisse vom Geraet eingetragen.
+- 528, 3800, Ton 192, p04 256: zwei Laeufe a 2 min sauber, beim zweiten mit vollem Pegel
+  (191 kbit/s, Bloecke im Mittel 509 Byte, alle da). p04 = 256 laeuft; die Blockgroesse
+  ist nicht die Ursache der alten Tonausfaelle.
+- 8000 + 192 (Lastversuch): die PVT stoppt nach 28 s von selbst, der Index der Datei ist
+  unbrauchbar. Die 8000er-Vorlagen sind gestrichen.
 
 Ton "aus (nur Video)" (seit 1.2): Ein Byte (0x0C363, 1 -> 2) schaltet den MG auf
 ENC_AV_SELECT = VIDEO_ONLY. Geprueft 20.10. (VID00012): Aufnahme sauber, aber der

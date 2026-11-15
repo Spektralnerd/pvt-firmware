@@ -15,11 +15,14 @@ const CORE = (() => {
     ['54d9afb8ff3d95cee1d003b54f71eca5bc97280b07966d209e7ee185954d4bd8', 'AG_4800_192', 'ungeprüft'],
     ['92ad9a5c56585ff7113e79d1378b415fdee589957c63694a189cc29d845c1da3', 'AG_4500_128', 'ungeprüft'],
     ['da2342eb4791231e589c4accb262ca8fcfb9ab459aa8529e5719374b3ecffc1e', 'AH_4900_128_P04_256', 'ungeprüft'],
-    ['091fb10a5c69745a09797b815a00031e81a304b25719e29b6ab6126042eab0e0', 'AI_528_4500_192', 'ungeprüft'],
+    ['091fb10a5c69745a09797b815a00031e81a304b25719e29b6ab6126042eab0e0', 'AI_528_4500_192', 'geprüft 20.10. (VID00007): Ton ab 19 s tot, erstes Loch bei 4 s (p04 48, Summe 4,69)'],
     ['fd5e2f3584542146d229ce3d899ff2a50e9b9b8834250e0300771c6535bfca4e', 'AI_528_4800_192', 'ungeprüft'],
     ['271938dbd8987439869488e3d3dae20a51ce93b376628e78776019809f61df21', 'AI_528_4500_192_P04_256', 'ungeprüft'],
     ['9952bab7e17a43a9b5fd756497f1c89fecd1bb12a40b323df33323483602e1fe', 'AE_V5000_A96_B528_REIN', 'geprüft 20.10.: Bild ok, Ton hält, Video 40 % Verlust in Phasen (zu hohe Rate)'],
     ['13508fa0b54fdd72fcb88738b69f0ed294b3599dc462655fe0d65fe0405a8960', 'AE_V4500_A96_B528_REIN', 'geprüft 20.10.: 117 s, Ton 99 %, Video sauber bis auf 10 s Störung bei 86 s'],
+    ['dffff832c10d90ed3c6721bd5c5b2cc1c049e1aeddefa28de7572d64b3697d19', 'AE_V3800_A192_B528_P256_REIN', 'am Gerät geprüft 15.11.: zwei Läufe à 2 min sauber, Ton 191 kbit/s vollständig bei vollem Pegel; 30 min stehen aus'],
+    ['15757eed5d9850c3be874467a0433f7ec62f8085bff2f5a0db49338e8395fb3b', 'AE_V4800_A192_B528_P256_REIN', 'ungeprüft – nächster Test (wie viel Bild neben 192 Ton geht)'],
+    ['9cbadf2f8ca8096bd17aff5a4b26f929012720f1b5a298a95a45e825390b78da', 'AE_V8000_A192_B528_P256_REIN', 'Lastversuch 15.11.: PVT stoppt nach 28 s von selbst, Index unbrauchbar – nicht verwenden'],
     ['7ee1f171721867e2df5f4c8136d94faba823073bc10a489b9ab283fe5aa559d9', 'AE_V4500_A96_B528_SR32000_REIN', 'geprüft 20.10. (VID00011): Takt bleibt 48 kHz → Ton 1,5× zu langsam, MG läuft über, Video 50 % kaputt, Ton tot ab 4 s. Abtastrate ist kein Hebel.']
   ];
   const H_ORIG = KNOWN[0][0], H_AE = KNOWN[1][0];

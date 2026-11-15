@@ -13,10 +13,13 @@ Messbefund**, **Code-/Modellbefund**, **Hypothese**.
 
 ## 0. In fünf Minuten einsteigen
 
-**Kurzfassung 15.11.2026: Neuauswertung (Abschnitt 33). Der Ton scheitert am kleinen
-MG-Tonpuffer (p04 = 48 Seiten) und an einem niedrigeren Host-Durchsatz mit echtem Ton
-(gerechnet 4,2–4,45 statt 5,2 Mbit/s), nicht an der Blockgröße. Nächster Schritt: Test 1 mit
-p04 = 256 und zwei Messläufe (33.6). Abschnitte 26, 27, 30 und 32 sind dort berichtigt.**
+**Kurzfassung 15.11.2026, 15:00: Neuauswertung (Abschnitt 33). Der Ton scheitert nicht an der
+Blockgröße: 528 · 3800 · Ton 192 · p04 256 lief am Gerät zweimal 2 min sauber, zuletzt bei vollem
+Pegel mit 191 kbit/s (33.7, 33.10). Vermutete Ursachen der alten Ausfälle: der kleine MG-Tonpuffer
+(p04 = 48 Seiten) und ein niedrigerer Host-Durchsatz mit echtem Ton (gerechnet 4,2–4,45 statt
+5,2 Mbit/s) – beides noch nicht getrennt bewiesen. 8000 kbit/s beendet die PVT nach 28 s von
+selbst mit unbrauchbarem Index (33.9, 33.10). Nächster Schritt: 4800 + 192 (33.11), danach
+30 min. Abschnitte 26, 27, 30 und 32 sind in 33.3 berichtigt.**
 
 **Kurzfassung 10.10.2026, 16:30: Beide Fehler sind gelöst und am Gerät bestätigt
 (Abschnitte 13–16). Vorführstand = Firmware AE auf LED1
@@ -1449,8 +1452,9 @@ Schritten (z. B. 4200 + 192).
 
 **33.9 Messlauf A, 8000 + 192 ohne Audiokabel (15.11., 14:20).** Nutzer hat die Platte im
 laufenden Betrieb kurz vor dem erwarteten Absturz gezogen: `VID00001.MP4`, 20,32 MB, ftyp +
-mdat (Größe eingetragen) + **abgeschnittener moov** (15.635 B laut Kopf, 2.531 B vorhanden). Die
-PVT war also schon beim Abschließen. Ein zweiter Versuch hinterließ `VID00002.MP4` und
+mdat (Größe eingetragen) + **zu kurzer moov** (15.635 B laut Kopf, 2.531 B vorhanden). Zuerst als
+„beim Abschließen abgeschnitten“ gelesen – berichtigt in 33.10: die PVT hatte die Aufnahme schon
+selbst beendet und die Datei fertig geschlossen. Ein zweiter Versuch hinterließ `VID00002.MP4` und
 `VID00002.MUX` mit je 0 Byte – die PVT führt während der Aufnahme eine `.MUX`-Begleitdatei
 (vermutlich die Index-Tabellen) und trägt Größen erst beim Abschluss ein; nach einem Absturz
 bleiben beide als verwaiste Ketten (die 64 FSCK-REC-Dateien von 14:13).
@@ -1464,14 +1468,63 @@ Ton = Lücken; an Test 1 gegen den echten Index geprüft, 3128/3128 Bilder):
 - Startverzögerung, falls das erste leere Bild „p03 voll“ bedeutet: **rund 2 s** (bei W 5,0–5,5:
   1,6–2,2 s) statt 3,8–4,0 s in VID00007/08/10 – auf der frisch geprüften und geleerten Platte.
   Stützt die Vermutung „τ0 hängt vom Plattenzustand ab“; nicht bewiesen.
-- **Index kaputt:** stsz nennt 496 Einträge, aber nur die ersten 118 sind echt – und das sind die
-  Größen der Bilder 378–495 (ab 19,5 s Medienzeit). Danach Füllmüll aus dem moov-Puffer (Kennungen
-  `stsc`, `stco`, `soun`, Chunk-Offsets ab dem Offset von Bild 378). Gleiches Muster wie VID00012
-  (nur die letzten ~120 Einträge). Hypothese: unter Volllast gehen die ausgelagerten Teile der
-  Index-Tabellen verloren, nur der letzte RAM-Puffer bleibt; der Abschluss mit diesem Index ist
-  wahrscheinlich der Absturz (rotes Blinken, Platte neu eingebunden). AF8 (8000, Stille, p04 48,
-  720) hatte trotz 140 s Sättigung einen vollständigen Index – der Auslöser ist also nicht die
-  Sättigung allein; offen.
+- **Index kaputt:** stsz nennt 496 Einträge, vorhanden sind nur 118 – die Größen der Bilder
+  378–495 (ab 19,5 s Medienzeit); danach folgen gleich die nächsten Boxen (`stsc`, `stco` mit den
+  Offsets ab Bild 378, Tonspur). Gleiches Muster wie VID00012. Genaue Zerlegung und Deutung in
+  33.10. AF8 (8000, Stille, p04 48, 720) hatte trotz 140 s Sättigung einen vollständigen Index –
+  der Auslöser ist also nicht die Sättigung allein; offen.
 - `pvt_check.py` meldet abgeschnittene/unstimmige Indizes jetzt mit Klartext statt Traceback.
 Folgerung: oberhalb der Mauer verliert die PVT nicht nur Bilder, sondern auch die Datei. Nach
 jedem Absturz `fsck.fat -a` und die REC-/0-Byte-Dateien löschen.
+
+**33.10 Test 1 mit vollem Pegel (15.11., 14:52): sauber. Dazu Berichtigung zu 33.9.**
+`VID00001_ordner01_Volle_lautsärke.MP4`, Firmware `AE_V3800_A192_B528_P256_REIN`, 121,6 s:
+- Video 3.040 Bilder, 3,800 Mbit/s, QP 24–26, **0 leer / 0 klein / 0 Teilbild**, mdhd = stts.
+- Ton 5.699 Blöcke = 121,58 s, **191,0 kbit/s, vollständig in allen 121 Sekunden**; Blöcke im
+  Mittel 509 B (Median 512, Maximum 924). Ton minus Video −0,02 s. ffmpeg decodiert beide Spuren
+  ohne Fehler. Pegel im Mittel −13,2 dB, Spitze −1,8 dB (VID00007/10: −23 dB; erster Test-1-Lauf
+  −28,5 dB). Quelle war nicht die 12,168-s-Schleife (Autokorrelation 0,07), der Schleifentest ist
+  hier nicht anwendbar.
+- **Die Blockgröße ist als Ursache gemessen widerlegt:** VID00007 verlor mit Blöcken von im Mittel
+  463 B ab 4 s Ton, hier sind größere Blöcke zwei Minuten lang vollständig.
+- Nicht getrennt ist, ob p04 (48 → 256) oder die kleinere Summe (4,69 → 3,99 Mbit/s) den Ausschlag
+  gab. Modell mit dem Ton dieser Datei: der alte Puffer hätte bei τ0 = 3,8–4,0 s 51–55 Seiten
+  gebraucht (106–114 %), bei τ0 = 2 s nur 30 (63 %); τ0 dieses Laufs ist aus der Datei nicht
+  ablesbar. Gegenprobe wäre derselbe Stand mit p04 48 (`AE_V3800_A192_B528_REIN`,
+  SHA `90927e74fe3d54933e7bbd320d347c1c3c767e0a8faf2b70282ac9919a7f9032`): Loch um 4 s = Puffer.
+- Bericht: `docs/berichte/TEST1_VOLLER_PEGEL_V3800_A192_B528_P256_REIN_pvtcheck.txt`.
+
+Berichtigung zu 33.9 (8000er-Lauf): Die Datei wurde **nicht** durch das Abziehen abgeschnitten.
+Der moov ist in sich vollständig, nur kürzer als sein Kopf sagt: beide Spuren sind da, die Datei
+endet genau hinter dem stco der Tonspur, und **jede Tabelle enthält genau n mod 126 Einträge** –
+Video stsz/stco 118 (= 496 mod 126), Ton stsz/stco 56 (= 1316 mod 126), stss vollständig
+(11 Schlüsselbilder). Die Box-Köpfe nennen die Größen für alle Einträge, und die Dateigröße im
+Verzeichnis stimmt bytegenau mit dem Ende dieses moov. Zu dieser Aufnahme kam keine `.MUX`-Datei
+mit (zum zweiten Versuch schon) – vermutlich war sie bereits gelöscht. Dasselbe bei VID00012: 1509 mod 126 = 123 vorhandene Größen.
+Folgerungen (Dateibefund, kein Code gelesen):
+- Der ColdFire sammelt je Index-Tabelle 126 Einträge im RAM (504 B, vermutlich ein 512-B-Satz
+  mit 8 B Kopf) und lagert volle Sätze in die `.MUX`-Datei aus. Beim Abschluss schreibt er die
+  ausgelagerten Sätze und danach den RAM-Rest in den moov und löscht die `.MUX`.
+- In diesen beiden Aufnahmen fehlen alle ausgelagerten Sätze (3 bzw. 11 je Videotabelle), nur der
+  RAM-Rest steht im moov. Die Bilddaten (mdat) sind vollständig.
+- Die PVT hat den 8000er-Lauf nach 28,07 s **selbst beendet und fertig geschlossen** (laut Nutzer
+  kein Tastendruck); rotes Blinken und Neu-Einbinden der Platte folgen danach. Das Abziehen kam
+  später und hat an dieser Datei nichts beschädigt.
+- Gemeinsamer Auslöser offen: VID00012 = nur Video bei 5,25 Mbit/s (an der Mauer, Stopp durch
+  Nutzer); 8000er-Lauf = Bild + Stille in Sättigung (Stopp durch die PVT). Gegenbeispiel AF8
+  (Sättigung, vollständiger Index). Denkbar: „nur Video“ ist gar nicht die Ursache des kurzen
+  Index von VID00012, sondern der Betrieb an der Mauer – prüfbar mit „nur Video“ bei 4500.
+- Solche Dateien lassen sich aus dem mdat auswerten (`docs/analyse/mdat_bildweise.py`) und, bei
+  nur Video, mit `mp4_reparatur.py` wieder abspielbar machen.
+
+**33.11 Nächster Test: wie viel Bild geht neben 192 Ton.** `AE_V4800_A192_B528_P256_REIN`,
+SHA `15757eed5d9850c3be874467a0433f7ec62f8085bff2f5a0db49338e8395fb3b` (22 Byte anders als der
+geprüfte 3800er-Stand: nur Videoziel, RC7, RC11; im CF-Modell 5 Befehle je LED). Summe 4,99 Mbit/s
+= das Niveau von AE ohne Ton (5 h), unter der Mauer. 3 min mit lautem Ton (112 MB), gern 5.
+Erwartung nach Modell (W mit Ton ≈ 4,4): Videopuffer läuft nach 20–40 s über, danach fehlen rund
+12 % der Bilder, der Ton bleibt vollständig (p04 256 fasst 19 s, der Rückstau bleibt unter 7 s);
+pvt_check 1.7 zeigt dann den Durchsatz mit Ton direkt. Läuft es 3 min sauber, liegt W mit Ton bei
+mindestens 4,87 (5 min: 4,92) und die Durchsatz-These aus 33.2 ist falsch – dann ist 4800 + 192 der Kandidat für
+den 30-min-Lauf. Bleibt der Ton bei Summe 4,99 vollständig (VID00007 verlor ihn bei 4,69 mit p04 48),
+ist zugleich der Tonpuffer als Schutz des Tons belegt. Paket: `PVT_TEST_V4800_A192_P256.zip` (mit dem geprüften 3800er-Stand als
+Rückweg). Baukasten 1.6.1: Vorlagen und bekannte Builds entsprechend.

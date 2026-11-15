@@ -47,12 +47,15 @@ file you supply. German documentation; the tools print German messages.*
 - **Mauer des Hosts:** Der ColdFire schreibt über USB Full Speed. Ohne Ton laufen 5,25 Mbit/s
   sauber (60 s), 6 Mbit/s und mehr verwerfen gleichmäßig Bilder. Mit Stille lag die Summe aus
   Video und Ton bei 5,02 Mbit/s über 5 Stunden; 5,25 ist die gemessene Grenze.
-- **Ton (neu ausgewertet 15.11., Befunde §33):** Pinnacles Tonpuffer im MG (p04 = 48 Seiten)
-  fasst bei 192 kbit/s nur 3,6 s Ton, der Host holt aber erst rund 4 s nach dem Start ab – der
-  Puffer läuft über, Tonblöcke gehen verloren. Dazu schafft der Host mit echtem Ton nur etwa
-  4,2–4,45 Mbit/s Summe (aus den Aufnahmen gerechnet). Der bisherige Stand 528×576i, 4500 + 96
-  verliert deshalb nach 70 s Ton. **Offen am Gerät:** p04 = 256 Seiten (Mobilygen-Standard) mit
-  3800 + 192 und zwei Messläufe für den Durchsatz mit Ton; die Vorlagen stehen im Baukasten 1.6.
+- **Ton (neu ausgewertet und geprüft 15.11., Befunde §33):** **528×576i, Video 3800 kbit/s, Ton
+  192 kbit/s mit MG-Tonpuffer p04 = 256 Seiten** lief zweimal 2 Minuten sauber, zuletzt bei vollem
+  Pegel (Ton 191 kbit/s, alle Blöcke da, kein Bild verloren). Die alte Erklärung „große Tonblöcke
+  töten den Tonpfad“ ist damit widerlegt. Vermutete Ursachen der früheren Ausfälle: Pinnacles
+  kleiner Tonpuffer (48 Seiten fassen bei 192 kbit/s nur 3,6 s, der Host holt aber erst nach 2–4 s
+  ab) und ein niedrigerer Durchsatz mit echtem Ton (gerechnet 4,2–4,45 Mbit/s). **Offen:** wie viel
+  Video neben dem Ton geht (Test 4800 + 192) und der 30-Minuten-Lauf.
+- **Über der Mauer:** 8000 kbit/s beendet die PVT nach 28 Sekunden von selbst; der MP4-Index
+  enthält dann nur die letzten Einträge jeder Tabelle (wie bei „nur Video“).
 - **Breite 528:** an die Auflösung einer 1/3"-CCD-Kamera (512 Punkte) angepasst, spart gemessen
   3–7 % Bits bei gleicher Qualität im Band der Kamera; Seitenverhältnis im MP4 korrekt (16:11 → 4:3).
 - **Nur Video:** Ein Byte schaltet den MG auf reines Video. Die Aufnahme ist makellos, aber der
