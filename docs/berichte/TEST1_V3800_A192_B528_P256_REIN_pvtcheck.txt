@@ -1,0 +1,29 @@
+==============================================================================
+VID00001_01_INSTALL_TEST1_V3800_A192_B528_P256_REIN.MP4
+==============================================================================
+Datei:      61.313.739 Byte, Marke 'mobi', moov am Ende
+Video:      avc1 Main, 528x576, 3.128 Bilder, 125,120 s, 3,788 Mbit/s
+            Halbbilder (field_pic) in 3.128 von 3.128 Bildern
+Container:  avc1 528x576, tkhd 528x576 (Anzeigegroesse)
+SPS:        528x576, Pixel 16:11 -> Anzeige 768x576 (1.333:1, 4:3 = 1.333)
+Audio:      mp4a 48000 Hz, 5.863 Bloecke, 125,077 s, 128,0 kbit/s
+Abtastrate: stsd 48000, mdhd 48000, AAC-Konfig 48000 (Index 3, 2 Kanaele)  [OK]
+Zeitachsen: Ton minus Video = -0,043 s  [OK]
+            mdhd Video 125,120 s / stts 125,120 s
+Schluesselbilder: 63, Abstaende 2,00 s
+Videorate je Sekunde (erste 12 s): 3,94 3,83 3,46 4,14 3,59 3,91 3,84 3,66 3,96 3,51 3,87 3,79
+Hoechstes Fenster: 0,2 s = 5,52 Mbit/s, 1 s = 4,27 Mbit/s (Medienzeit, nicht USB)
+QP (Slice): 22..24, Mittel 23,10
+
+Wiederholungen / Aussetzer:
+  leer (alle Makrobloecke uebersprungen): 0
+  sehr klein (< 1000 Byte):              0
+  Teilbild (< 40 % des Medians):          0
+  ('leer' = exakte Wiederholung; 'sehr klein'/'Teilbild' = Verdacht, nur in bewegtem Umfeld)
+  keine
+
+Audio/Video in Dateireihenfolge: Grundversatz -0,032 s
+  keine Videopausen ueber 0,1 s
+Ton je Sekunde: vollstaendig (46,9 Bloecke/s in allen 125 Sekunden)
+Datenrate im Mittelteil: 3,91 Mbit/s (Dateiposition gegen Tonzeit, 20 bis 115 s). Bei Ueberlast
+  (Bilder fehlen/leer) ist das der Durchsatz des Hosts, sonst die erzeugte Rate.

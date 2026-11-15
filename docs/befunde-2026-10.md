@@ -1426,3 +1426,14 @@ das der Host-Durchsatz, gültig nur bei lückenlosem Ton. Geprüft an AF8: 5,19 
    4-GiB-Wechsel.
 5. Später: Startverzögerung gegen Plattenfüllung (frisch formatiert gegen gefüllt, je ein
    Messlauf A), UART-Mitschnitt bei Tonverlust, Stromausfall-Test für die Zwischendatei.
+
+**33.7 Ergebnis Test 1 (15.11., 13:51).** `VID00001_01_INSTALL_TEST1_V3800_A192_B528_P256_REIN.MP4`,
+125 s: **sauber.** 0 leer/klein/Teilbild, mdhd = stts, Ton vollständig in allen 125 Sekunden (kein
+Loch bei 4 s), Ton minus Video −0,04 s, ffmpeg decodiert beide Spuren ohne Fehler. **p04 = 256
+nimmt der MG an** (Aufnahme startet normal). Einschränkung: Die Tonquelle war leiser als bei
+VID00007/10 (−28,5 dB statt −23 dB im Mittel) und nicht die Schleife; der AAC-Encoder nutzt 192
+nur als Obergrenze und lag im Mittel bei 128 kbit/s, in den ersten 4 s bei 93. Damit wäre laut
+Modell auch p04 = 48 beim Start nur zu ~80 % voll geworden – der Beweis für die Puffer-Ursache
+steht also noch aus (Messlauf B mit der Schleife auf altem Pegel). Vorher: Wackelkontakt im
+USB-Kabel der Platte am PC (Lesefehler, Platte kam als neues Gerät zurück, FAT nur noch lesbar);
+Kabel getauscht. Bericht: `docs/berichte/TEST1_V3800_A192_B528_P256_REIN_pvtcheck.txt`.
