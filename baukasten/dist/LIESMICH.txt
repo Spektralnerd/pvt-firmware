@@ -1,4 +1,4 @@
-PVT FIRMWARE-BAUKASTEN 1.6.1 (15.11.2026, 15:00)
+PVT FIRMWARE-BAUKASTEN 1.6.2 (15.11.2026, 15:45)
 
 PVT_Firmware_Baukasten.html im Browser oeffnen (Doppelklick; Firefox oder Chromium).
 Keine Installation, kein Server, keine Internetverbindung noetig. Nur die Schriften
@@ -8,7 +8,7 @@ kommen bei Online-Betrieb von Google Fonts, offline nimmt der Browser Ersatzschr
    in das Feld ziehen. Der Baukasten prueft die SHA-256 und macht aus dem Original
    den Stand AE (Hash-geprueft).
 2. Einstellungen waehlen oder ein Preset druecken. Die Summe Video + Ton wird gegen
-   die 5,25-Mbit/s-Mauer angezeigt (ohne Ton gemessen; mit echtem Ton gerechnet 4,2-4,45).
+   die 5,25-Mbit/s-Mauer angezeigt (mit Ton und p04 256 am Geraet geprueft bis 4,99).
 3. "Firmware bauen", dann "ZIP speichern". Das ZIP enthaelt 01_INSTALL_<Name>/CFUPDATE.BIN,
    die Rueckkehrdateien (AE, Original), README_DE.txt und SHA256SUMS.txt.
 
@@ -28,11 +28,16 @@ Neu in 1.6 (15.11.2026): Hinweise nach der Neuauswertung der Aufnahmen berichtig
   4 s ueber), nicht an der Blockgroesse. Der Baukasten rechnet jetzt die Pufferzeit aus
   p04 und Tonrate und warnt, wenn sie unter der Startzeit von rund 4 s liegt. Fuer Ton
   p04 = 256 (Mobilygen-Standard) waehlen; am Geraet noch ungeprueft.
-- Mit echtem Ton schaffte der Host nur 4,2-4,45 Mbit/s Summe (ohne Ton 5,25).
+- (ueberholt, siehe 1.6.2) Mit echtem Ton schaffte der Host nur 4,2-4,45 Mbit/s Summe.
 - Puffer-Regelung: nicht das kleine Modell (1,25 MBit/125 ms; 6-13 % Videozeit-Verlust
   bei AC/AD), sondern 5 MBit/45000 oder 10 MBit/90000 wie AE LED2/LED3.
 - Vorlagen: geprueften Stand "Mit Ton" (528, 3800, Ton 192, p04 256) und naechster Test
   (528, 4800, Ton 192, p04 256).
+
+1.6.2 (15.11., 15:45): 528, 4800, Ton 192, p04 256 am Geraet sauber (131 s, voller Pegel,
+Summe 4,99 Mbit/s). Echter Ton kostet mit dem grossen Tonpuffer keinen messbaren Durchsatz;
+die Schaetzung "mit Ton nur 4,2-4,45 Mbit/s" aus 1.6 war falsch und ist entfernt. Die Warnung
+gilt nur noch fuer p04 unter 256 (dort gab es im Oktober Verluste ab Summe 4,6).
 
 1.6.1 (15.11., 15:00): Ergebnisse vom Geraet eingetragen.
 - 528, 3800, Ton 192, p04 256: zwei Laeufe a 2 min sauber, beim zweiten mit vollem Pegel

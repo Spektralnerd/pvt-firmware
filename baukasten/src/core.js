@@ -20,8 +20,8 @@ const CORE = (() => {
     ['271938dbd8987439869488e3d3dae20a51ce93b376628e78776019809f61df21', 'AI_528_4500_192_P04_256', 'ungeprüft'],
     ['9952bab7e17a43a9b5fd756497f1c89fecd1bb12a40b323df33323483602e1fe', 'AE_V5000_A96_B528_REIN', 'geprüft 20.10.: Bild ok, Ton hält, Video 40 % Verlust in Phasen (zu hohe Rate)'],
     ['13508fa0b54fdd72fcb88738b69f0ed294b3599dc462655fe0d65fe0405a8960', 'AE_V4500_A96_B528_REIN', 'geprüft 20.10.: 117 s, Ton 99 %, Video sauber bis auf 10 s Störung bei 86 s'],
-    ['dffff832c10d90ed3c6721bd5c5b2cc1c049e1aeddefa28de7572d64b3697d19', 'AE_V3800_A192_B528_P256_REIN', 'am Gerät geprüft 15.11.: zwei Läufe à 2 min sauber, Ton 191 kbit/s vollständig bei vollem Pegel; 30 min stehen aus'],
-    ['15757eed5d9850c3be874467a0433f7ec62f8085bff2f5a0db49338e8395fb3b', 'AE_V4800_A192_B528_P256_REIN', 'ungeprüft – nächster Test (wie viel Bild neben 192 Ton geht)'],
+    ['dffff832c10d90ed3c6721bd5c5b2cc1c049e1aeddefa28de7572d64b3697d19', 'AE_V3800_A192_B528_P256_REIN', 'am Gerät geprüft 15.11.: zwei Läufe à 2 min sauber, Ton 191 kbit/s vollständig bei vollem Pegel (Reserve-Stand unter 4800 + 192)'],
+    ['15757eed5d9850c3be874467a0433f7ec62f8085bff2f5a0db49338e8395fb3b', 'AE_V4800_A192_B528_P256_REIN', 'am Gerät geprüft 15.11.: 131 s sauber bei vollem Pegel (Summe 4,99 Mbit/s, Ton 191 kbit/s vollständig); 30 min stehen aus'],
     ['9cbadf2f8ca8096bd17aff5a4b26f929012720f1b5a298a95a45e825390b78da', 'AE_V8000_A192_B528_P256_REIN', 'Lastversuch 15.11.: PVT stoppt nach 28 s von selbst, Index unbrauchbar – nicht verwenden'],
     ['7ee1f171721867e2df5f4c8136d94faba823073bc10a489b9ab283fe5aa559d9', 'AE_V4500_A96_B528_SR32000_REIN', 'geprüft 20.10. (VID00011): Takt bleibt 48 kHz → Ton 1,5× zu langsam, MG läuft über, Video 50 % kaputt, Ton tot ab 4 s. Abtastrate ist kein Hebel.']
   ];
@@ -86,7 +86,9 @@ const CORE = (() => {
   // MG-Handbuch 10.11: RC6/RC7 = SIZE_ENABLE / SIZE_BIT_TOLERANCE (Dateigröße = Soll ± Toleranz in Bit),
   // RC9/RC10 = BUFFER_ENABLE / BUFFER_SIZE_BITS (Leaky-Bucket für begrenzte Kanäle), RC11 = Kanalrate Bit/s, RC12 = Startverzögerung (90-kHz-Ticks).
   // Puffermodell (Befunde §33): der Host holt erst rund TAU0 s nach dem Start ab; je Tonblock 64 Byte Verwaltung im MG-Puffer.
-  const TAU0 = 4, W_TON = 4300; // s; kbit/s Durchsatz mit echtem Ton (aus VID00007/08/10 gerechnet: 4,2-4,45 Mbit/s)
+  // W_TON: ab dieser Summe (kbit/s) gab es im Oktober mit echtem Ton und kleinem Tonpuffer (p04 48) Verluste (4500+96, 4500+192,
+  // 5000+96). Mit p04 256 lief 4800+192 = 4,99 Mbit/s am 15.11. sauber - die These "Ton kostet Durchsatz" ist damit widerlegt.
+  const TAU0 = 4, W_TON = 4500;
   const audioPoolSeconds = (pages, kbit, srate) => pages * 2048 / (kbit * 125 + 64 * (srate || 48000) / 1024);
   const AUDIO_OK = [0, 48, 64, 96, 128, 192, 256, 320, 384]; // Vorschläge; 0 = nur Video; MG-Datenblatt: 8-384 kbit/s
   const AVSEL = 0x0c363;                           // moveq #1,d5 (0x7A01): MG ENC_INPUT_SELECT/ENC_AV_SELECT (Param 40/17), 1 = Audio+Video, 2 = nur Video

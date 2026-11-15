@@ -225,8 +225,9 @@ def build(src, outdir, width, video, audio, pages=None, x=None):
                          "Tonbloecke gehen schon beim Start verloren (VID00007). p04 = 256 nehmen" % (pages or 48, tau_a, audio))
         elif tau_a < 8:
             hints.append("Tonpuffer p04 = %d Seiten = %.1f s Ton: knapp bei Rueckstau (4500 + 96 verlor nach 70 s Ton). p04 = 256 nehmen" % (pages or 48, tau_a))
-        if 4300 < video + audio <= 5250:
-            hints.append("mit echtem Ton schaffte der Host nur 4,2-4,45 Mbit/s Summe (VID00007/08/10, gerechnet); darueber waechst der Rueckstau")
+        if (pages or 48) < 256 and 4500 <= video + audio <= 5250:
+            hints.append("mit Ton und p04 unter 256 gab es im Oktober ab Summe 4,6 Mbit/s Verluste (VID00007/08/10); "
+                         "mit p04 256 lief 4800 + 192 = 4,99 am 15.11. sauber")
     for name, v, src_v in (("Breite", width, 720), ("Hoehe", x["hoehe"], 576), ("NTSC-Breite", x["ntsc"][0], 720), ("NTSC-Hoehe", x["ntsc"][1], 480)):
         if v != src_v:
             if v <= 16:

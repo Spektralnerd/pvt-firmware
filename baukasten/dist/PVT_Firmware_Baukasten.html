@@ -140,8 +140,8 @@ footer { color: var(--muted); font-size: 13px; padding-top: 24px; }
     <h2><span class="n">2</span>Einstellungen</h2>
     <div class="presets" id="presets">
       <button class="btn sm" type="button" data-preset="ae">AE (Vorführstand)</button>
-      <button class="btn sm" type="button" data-preset="t1">Mit Ton, geprüft 15.11.: 528 · 3800 · Ton 192 · p04 256</button>
-      <button class="btn sm" type="button" data-preset="t4">Nächster Test: 528 · 4800 · Ton 192 · p04 256</button>
+      <button class="btn sm" type="button" data-preset="t4">Mit Ton, geprüft 15.11.: 528 · 4800 · Ton 192 · p04 256</button>
+      <button class="btn sm" type="button" data-preset="t1">Mit Ton, Reserve: 528 · 3800 · Ton 192 · p04 256 (geprüft)</button>
       <button class="btn sm" type="button" data-preset="ton96">Alt: 528 · 4500 · Ton 96 (Tonverlust ab 70 s)</button>
       <button class="btn sm" type="button" data-preset="nurvideo">Nur Video: AE ohne Ton (Index reparieren)</button>
       <button class="btn sm" type="button" data-preset="rein">AE rein (alle LEDs wie LED1)</button>
@@ -152,13 +152,13 @@ footer { color: var(--muted); font-size: 13px; padding-top: 24px; }
           <label for="video">Videoziel (kbit/s)</label>
           <input type="number" id="video" list="dl-video" min="1" step="1" value="5000">
           <datalist id="dl-video"><option value="3600"><option value="4200"><option value="4500"><option value="4800"><option value="5000"><option value="6000"><option value="8000"><option value="10000"></datalist>
-          <div class="hint">Frei wählbar. AE: 5000 (ohne Ton 5 h bewährt). Gemessene Host-Mauer ohne Ton 5,25 Mbit/s Summe; mit echtem Ton kam der Host in den alten Aufnahmen (p04 48) rechnerisch nur auf 4,2 bis 4,45 (5000 + 96 kippte nach 19 s, 4500 + 96 nach 70 s). Am Gerät sauber: 3800 + 192 mit p04 256 (15.11.). MG-Datenblatt: 64 kbit/s bis 10 Mbit/s. Unter 3600 setzt der ColdFire MG-Param 10 auf 1 statt 2 (anderer Encoder-Modus wie die Original-Stufen).</div>
+          <div class="hint">Frei wählbar. AE: 5000 (ohne Ton 5 h bewährt). Gemessene Host-Mauer ohne Ton 5,25 Mbit/s Summe; mit Ton und p04 256 lief 4800 + 192 (Summe 4,99) am 15.11. sauber. Mit Pinnacles p04 48 gab es im Oktober mit echtem Ton schon ab Summe 4,6 Verluste. MG-Datenblatt: 64 kbit/s bis 10 Mbit/s. Unter 3600 setzt der ColdFire MG-Param 10 auf 1 statt 2 (anderer Encoder-Modus wie die Original-Stufen).</div>
         </div>
         <div class="field">
           <label for="audio">Audio (kbit/s AAC, 0 = aus)</label>
           <input type="number" id="audio" list="dl-audio" min="0" step="1" value="384">
           <datalist id="dl-audio"><option value="0"><option value="8"><option value="16"><option value="24"><option value="32"><option value="48"><option value="64"><option value="80"><option value="96"><option value="112"><option value="128"><option value="160"><option value="192"><option value="256"><option value="320"><option value="384"></datalist>
-          <div class="hint">Frei wählbar, MG-Datenblatt 8–384. 192 läuft mit p04 256 (geprüft 15.11.: 3800 + 192 bei vollem Pegel, 2 min vollständig). Mit Pinnacles p04 = 48 läuft der Tonpuffer rechnerisch in den ersten 4 s über; an der Blockgröße liegt es nicht. 0 = nur Video (ein Byte): geprüft 20.10., Aufnahme makellos bei 5,25 Mbit/s, aber der Index wird unvollständig geschrieben – Datei mit mp4_reparatur.py reparieren.</div>
+          <div class="hint">Frei wählbar, MG-Datenblatt 8–384. 192 läuft mit p04 256 (geprüft 15.11.: 3800 + 192 und 4800 + 192 bei vollem Pegel, je 2 min vollständig). Mit Pinnacles p04 = 48 läuft der Tonpuffer rechnerisch in den ersten 4 s über; an der Blockgröße liegt es nicht. 0 = nur Video (ein Byte): geprüft 20.10., Aufnahme makellos bei 5,25 Mbit/s, aber der Index wird unvollständig geschrieben – Datei mit mp4_reparatur.py reparieren.</div>
         </div>
         <div class="field">
           <label for="width">Bildbreite PAL (Pixel)</label>
@@ -176,7 +176,7 @@ footer { color: var(--muted); font-size: 13px; padding-top: 24px; }
           <label for="p04">MG-Audiopuffer p04 (Seiten à 2 KB)</label>
           <input type="number" id="p04" list="dl-p04" min="1" step="1" value="48">
           <datalist id="dl-p04"><option value="48"><option value="96"><option value="128"><option value="192"><option value="256"></datalist>
-          <div class="hint">Pinnacle/AE: 48 (96 KB) – das sind bei 192 kbit/s nur 3,6 s Ton, der Host holt aber erst nach rund 4 s ab. Mobilygen-Standard: 256 (512 KB). Für Aufnahmen mit Ton 256 wählen; passt laut Emulation in den MG-Speicher (5025 von 5120 Seiten) und lief am 15.11. am Gerät (3800 + 192).</div>
+          <div class="hint">Pinnacle/AE: 48 (96 KB) – das sind bei 192 kbit/s nur 3,6 s Ton, der Host holt aber erst nach rund 4 s ab. Mobilygen-Standard: 256 (512 KB). Für Aufnahmen mit Ton 256 wählen; passt laut Emulation in den MG-Speicher (5025 von 5120 Seiten) und lief am 15.11. am Gerät (3800 + 192 und 4800 + 192).</div>
         </div>
         <div class="field check">
           <input type="checkbox" id="rein">
@@ -291,7 +291,7 @@ footer { color: var(--muted); font-size: 13px; padding-top: 24px; }
   </section>
 </main>
 <footer>
-  <p>Baukasten 1.6.1 · Stand 15.11.2026, 15:00. Freie Werte, nur technische Sperren. Experimentelle Firmware: jede neue Kombination hat 0 Hardwaretests. Rückkehrdateien (AE und Original) liegen jedem Paket bei. Backups und Dumps behalten.</p>
+  <p>Baukasten 1.6.2 · Stand 15.11.2026, 15:45. Freie Werte, nur technische Sperren. Experimentelle Firmware: jede neue Kombination hat 0 Hardwaretests. Rückkehrdateien (AE und Original) liegen jedem Paket bei. Backups und Dumps behalten.</p>
 </footer>
 <script>
 /* PVT Firmware-Baukasten – Kern (reine Funktionen, keine DOM-Zugriffe).
@@ -316,8 +316,8 @@ const CORE = (() => {
     ['271938dbd8987439869488e3d3dae20a51ce93b376628e78776019809f61df21', 'AI_528_4500_192_P04_256', 'ungeprüft'],
     ['9952bab7e17a43a9b5fd756497f1c89fecd1bb12a40b323df33323483602e1fe', 'AE_V5000_A96_B528_REIN', 'geprüft 20.10.: Bild ok, Ton hält, Video 40 % Verlust in Phasen (zu hohe Rate)'],
     ['13508fa0b54fdd72fcb88738b69f0ed294b3599dc462655fe0d65fe0405a8960', 'AE_V4500_A96_B528_REIN', 'geprüft 20.10.: 117 s, Ton 99 %, Video sauber bis auf 10 s Störung bei 86 s'],
-    ['dffff832c10d90ed3c6721bd5c5b2cc1c049e1aeddefa28de7572d64b3697d19', 'AE_V3800_A192_B528_P256_REIN', 'am Gerät geprüft 15.11.: zwei Läufe à 2 min sauber, Ton 191 kbit/s vollständig bei vollem Pegel; 30 min stehen aus'],
-    ['15757eed5d9850c3be874467a0433f7ec62f8085bff2f5a0db49338e8395fb3b', 'AE_V4800_A192_B528_P256_REIN', 'ungeprüft – nächster Test (wie viel Bild neben 192 Ton geht)'],
+    ['dffff832c10d90ed3c6721bd5c5b2cc1c049e1aeddefa28de7572d64b3697d19', 'AE_V3800_A192_B528_P256_REIN', 'am Gerät geprüft 15.11.: zwei Läufe à 2 min sauber, Ton 191 kbit/s vollständig bei vollem Pegel (Reserve-Stand unter 4800 + 192)'],
+    ['15757eed5d9850c3be874467a0433f7ec62f8085bff2f5a0db49338e8395fb3b', 'AE_V4800_A192_B528_P256_REIN', 'am Gerät geprüft 15.11.: 131 s sauber bei vollem Pegel (Summe 4,99 Mbit/s, Ton 191 kbit/s vollständig); 30 min stehen aus'],
     ['9cbadf2f8ca8096bd17aff5a4b26f929012720f1b5a298a95a45e825390b78da', 'AE_V8000_A192_B528_P256_REIN', 'Lastversuch 15.11.: PVT stoppt nach 28 s von selbst, Index unbrauchbar – nicht verwenden'],
     ['7ee1f171721867e2df5f4c8136d94faba823073bc10a489b9ab283fe5aa559d9', 'AE_V4500_A96_B528_SR32000_REIN', 'geprüft 20.10. (VID00011): Takt bleibt 48 kHz → Ton 1,5× zu langsam, MG läuft über, Video 50 % kaputt, Ton tot ab 4 s. Abtastrate ist kein Hebel.']
   ];
@@ -410,7 +410,9 @@ const CORE = (() => {
   // MG-Handbuch 10.11: RC6/RC7 = SIZE_ENABLE / SIZE_BIT_TOLERANCE (Dateigröße = Soll ± Toleranz in Bit),
   // RC9/RC10 = BUFFER_ENABLE / BUFFER_SIZE_BITS (Leaky-Bucket für begrenzte Kanäle), RC11 = Kanalrate Bit/s, RC12 = Startverzögerung (90-kHz-Ticks).
   // Puffermodell (Befunde §33): der Host holt erst rund TAU0 s nach dem Start ab; je Tonblock 64 Byte Verwaltung im MG-Puffer.
-  const TAU0 = 4, W_TON = 4300; // s; kbit/s Durchsatz mit echtem Ton (aus VID00007/08/10 gerechnet: 4,2-4,45 Mbit/s)
+  // W_TON: ab dieser Summe (kbit/s) gab es im Oktober mit echtem Ton und kleinem Tonpuffer (p04 48) Verluste (4500+96, 4500+192,
+  // 5000+96). Mit p04 256 lief 4800+192 = 4,99 Mbit/s am 15.11. sauber - die These "Ton kostet Durchsatz" ist damit widerlegt.
+  const TAU0 = 4, W_TON = 4500;
   const audioPoolSeconds = (pages, kbit, srate) => pages * 2048 / (kbit * 125 + 64 * (srate || 48000) / 1024);
   const AUDIO_OK = [0, 48, 64, 96, 128, 192, 256, 320, 384]; // Vorschläge; 0 = nur Video; MG-Datenblatt: 8-384 kbit/s
   const AVSEL = 0x0c363;                           // moveq #1,d5 (0x7A01): MG ENC_INPUT_SELECT/ENC_AV_SELECT (Param 40/17), 1 = Audio+Video, 2 = nur Video
@@ -730,8 +732,8 @@ const CORE = (() => {
   const preset = (o) => CORE.withDefaults(o);
   const PRESETS = {
     ae: preset({}),
-    t1: preset({ video: 3800, audio: 192, width: 528, p04: 256, rein: true }),
     t4: preset({ video: 4800, audio: 192, width: 528, p04: 256, rein: true }),
+    t1: preset({ video: 3800, audio: 192, width: 528, p04: 256, rein: true }),
     ton96: preset({ video: 4500, audio: 96, width: 528, rein: true }),
     nurvideo: preset({ audio: 0 }),
     rein: preset({ rein: true })
@@ -758,14 +760,14 @@ const CORE = (() => {
   $('form').addEventListener('submit', e => e.preventDefault());
 
   const fmtTick = (kb) => (kb / 1000).toFixed(kb % 500 ? 2 : 1).replace('.', ',');
-  function renderBar(sum, audio) {
+  function renderBar(sum, tonKnapp) {
     const ok = Number.isFinite(sum);
     $('sumVal').textContent = ok ? fmtM(sum) : '–';
     const lo = ok ? Math.min(4000, Math.max(0, Math.floor((sum - 500) / 500) * 500)) : 4000;
     const hi = ok ? Math.max(5500, Math.ceil((sum + 500) / 500) * 500) : 5500;
     const pos = (v) => Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100));
     const fill = $('sumFill'); fill.style.width = (ok ? pos(sum) : 0) + '%';
-    fill.className = 'fill' + (ok && sum > 5250 ? ' bad' : ok && (sum > 5050 || (audio > 0 && sum > CORE.W_TON)) ? ' warn' : '');
+    fill.className = 'fill' + (ok && sum > 5250 ? ' bad' : ok && (sum > 5050 || tonKnapp) ? ' warn' : '');
     $('markOk').style.left = pos(5050) + '%'; $('markWall').style.left = pos(5250) + '%';
     const span = hi - lo, step = span <= 2000 ? 500 : span <= 6000 ? 1000 : span <= 15000 ? 2500 : span <= 40000 ? 5000 : 20000;
     const ticks = [];
@@ -789,7 +791,8 @@ const CORE = (() => {
   function onChange() {
     state.built = null; renderResult(null);
     const s = readForm(); const sum = s.video + s.audio;
-    renderBar(sum, s.audio);
+    const tonKnapp = s.audio > 0 && s.p04 < 256 && sum >= CORE.W_TON;
+    renderBar(sum, tonKnapp);
     const notes = [], D = CORE.DEFAULTS, L = CORE.LIMITS;
     const bad = (t) => notes.push(['bad', t]), warn = (t) => notes.push(['warn', t]), info = (t) => notes.push(['', t]);
     const intIn = (v, [lo, hi]) => Number.isInteger(v) && v >= lo && v <= hi;
@@ -809,7 +812,8 @@ const CORE = (() => {
     if (sum > 5250) warn('Summe über der gemessenen Host-Mauer von 5,25 Mbit/s (AE mit Stille lief bis 5,02 fünf Stunden). Erwartung: leere Bilder in Phasen; mit echtem Ton sicher Aussetzer. Weit darüber (8000 + 192 am 15.11.) stoppte die PVT nach 28 s von selbst und schrieb einen unbrauchbaren Index. Für den Versuch erlaubt.');
     else if (sum > 5050) warn('Summe über dem bewährten Niveau von 5,05 Mbit/s (gilt ohne Ton oder mit Stille). AE selbst liegt mit 384 kbit/s Ton rechnerisch bei 5,38 und brach ab.');
     else info('Summe unter dem bewährten Niveau ohne Ton: rechnerisch ' + Math.round(sum / 5250 * 100) + ' % der Mauer.');
-    if (s.audio > 0 && sum > CORE.W_TON && sum <= 5250) warn('Mit echtem Ton schaffte der Host in drei Aufnahmen nur 4,2 bis 4,45 Mbit/s (VID00007/08/10, aus dem Pufferverlauf gerechnet) statt 5,25 ohne Ton. Summe ' + fmtM(sum) + ' liegt darüber: der Rückstau wächst langsam, bis ein MG-Puffer überläuft (5000 + 96 nach 19 s, 4500 + 96 nach 70 s). Das ist gerechnet, nicht gemessen (alte Aufnahmen mit p04 48). Am Gerät sauber ist bisher 3800 + 192 mit p04 256 (15.11.); der Test 4800 + 192 zeigt, wie viel mit Ton wirklich durchgeht.');
+    if (tonKnapp && sum <= 5250) warn('Mit Ton und kleinem Tonpuffer (p04 unter 256) gab es im Oktober bei jeder getesteten Summe ab 4,6 Mbit/s Verluste (4500 + 96 nach 70 s, 5000 + 96 nach 19 s, 4500 + 192 sofort). Mit p04 256 lief 4800 + 192 (Summe 4,99) am 15.11. sauber. p04 auf 256 stellen.');
+    else if (s.audio > 0 && s.p04 >= 256 && sum <= 5050) info('Mit Ton und p04 256 am Gerät sauber bis Summe 4,99 Mbit/s (4800 + 192, 131 s bei vollem Pegel, 15.11.). Echter Ton kostet damit keinen messbaren Durchsatz; die frühere Schätzung von 4,2 bis 4,45 war falsch.');
     if (s.video > 10000) warn('Videoziel über dem MG-Datenblatt (64 kbit/s bis 10 Mbit/s). Der MG kann abweisen oder stillschweigend begrenzen; der Host wäre ohnehin weit über der Mauer.');
     if (s.video < 3600) info('Unter 3600: der ColdFire setzt MG-Param 10 auf 1 statt 2 (so laufen die Original-Stufen mit 768/1200/1500). Anderer Encoder-Modus, kein Fehler.');
     if (s.video < 64) warn('Videoziel unter dem MG-Minimum von 64 kbit/s.');
@@ -821,7 +825,7 @@ const CORE = (() => {
       else if (tauA < 8) warn('Tonpuffer knapp: p04 = ' + s.p04 + ' Seiten = ' + tauTxt + ' Ton bei ' + s.audio + ' kbit/s. Reicht für den Start (rund 4 s), aber kaum für Rückstau: 4500 + 96 verlor so nach 70 s Ton (VID00010). Mit p04 256 wären es ' + CORE.audioPoolSeconds(256, s.audio, s.srate).toFixed(0) + ' s.');
       else info('Tonpuffer: p04 = ' + s.p04 + ' Seiten = ' + tauTxt + ' Ton bei ' + s.audio + ' kbit/s (Start braucht rund 4 s).');
       if (!CORE.AUDIO_OK.includes(s.audio)) info('Ton ' + s.audio + ' kbit/s: Zwischenwert, der MG nimmt jede Zahl in Bit/s als Langzeit-Bitrate; Blöcke um ' + Math.round(s.audio * 1000 * 1024 / 48000 / 8) + ' Byte.');
-      if (s.audio === 192 && s.p04 === 256) info('Ton 192 mit p04 256: am Gerät geprüft 15.11. (3800 + 192, voller Pegel) – 191 kbit/s, 2 min vollständig, Blöcke im Mittel 509 Byte.');
+      if (s.audio === 192 && s.p04 === 256) info('Ton 192 mit p04 256: am Gerät geprüft 15.11. (3800 + 192 und 4800 + 192, voller Pegel) – 191 kbit/s, jeweils 2 min vollständig, Blöcke im Mittel 510 Byte.');
       else if (s.audio > 96 && s.p04 >= 256) info('Ton ' + s.audio + ' kbit/s mit p04 ' + s.p04 + ': in dieser Kombination ungeprüft (192 mit 256 lief am 15.11. sauber).');
     }
     const sizeNotes = (w, h, srcW, srcH, norm, tested) => {
@@ -855,7 +859,7 @@ const CORE = (() => {
       else warn('Puffer-Regelung an: LED1 bekommt das Leaky-Bucket-Modell mit ' + (s.rc10 / 1000000).toLocaleString('de-DE') + ' MBit. AE LED2 (5 MBit/45.000) und LED3 (10 MBit/90.000) liefen damit sauber; AE hat es für LED1 abgeschaltet und nur die Größenregelung behalten.');
     }
     if (s.p03 !== 2048) warn('Videopuffer p03 ' + s.p03 + ' Seiten: Pinnacle/AB liefen mit 832, sonst ungeprüft.');
-    if (s.p04 === 256) info('Audiopuffer p04 256 Seiten = Mobilygen-Standard (Pinnacle: 48). Am Gerät geprüft 15.11. (3800 + 192, zwei Läufe à 2 min sauber).');
+    if (s.p04 === 256) info('Audiopuffer p04 256 Seiten = Mobilygen-Standard (Pinnacle: 48). Am Gerät geprüft 15.11. (3800 + 192 und 4800 + 192, je 2 min sauber).');
     else if (s.p04 !== 48) warn('Audiopuffer p04 ' + s.p04 + ' Seiten: ungeprüft am Gerät.');
     if (s.p03 + s.p04 > 2304) warn('p03 + p04 = ' + (s.p03 + s.p04) + ' Seiten übersteigt den belegten Speicherplan (2048 + 256 passten in der Emulation, 5025 von 5120 Seiten). Der MG könnte nicht starten.');
     if (s.rein) info('AE rein: LED2/LED3 am Gerät noch ungeprüft, LED1 bleibt wie AE.');
@@ -918,7 +922,7 @@ const CORE = (() => {
       '  MG-Puffer        Video p03 = ' + s.p03 + ' Seiten (' + s.p03 * 2 + ' KB), Audio p04 = ' + s.p04 + ' Seiten (' + s.p04 * 2 + ' KB)',
       '  LED2/LED3        ' + (s.rein ? 'wie LED1 (AE rein)' : 'wie AE (LED2 Modell 5 Mbit/0,5 s, LED3 10 Mbit/1 s)'),
       '  TF-Stufe         LED1 ' + s.tf[0] + ' / LED2 ' + s.tf[1] + ' / LED3 ' + s.tf[2],
-      '  Summe Video+Ton  ' + fmtM(sum) + ' (Host-Mauer ohne Ton 5,25, bewaehrt <= 5,05; mit echtem Ton gerechnet 4,2-4,45)' + (sum > 5250 ? ' - UEBER DER MAUER, Versuch' : ''),
+      '  Summe Video+Ton  ' + fmtM(sum) + ' (Host-Mauer 5,25; bewaehrt <= 5,05; mit Ton und p04 256 geprueft bis 4,99)' + (sum > 5250 ? ' - UEBER DER MAUER, Versuch' : ''),
       ...(s.audio > 0 ? ['  Tonpuffer        p04 fasst ' + CORE.audioPoolSeconds(s.p04, s.audio, s.srate).toFixed(1) + ' s Ton (Start braucht rund 4 s)'] : []),
       '', 'STAND', '  ' + (k ? k.name + ': ' + k.status : 'Neue Kombination, 0 Hardwaretests.'),
       '  Freigabe fuer lange Laeufe erst nach 30 min mit Ton und einem 4-GiB-Wechsel.',

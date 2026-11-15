@@ -47,13 +47,13 @@ file you supply. German documentation; the tools print German messages.*
 - **Mauer des Hosts:** Der ColdFire schreibt über USB Full Speed. Ohne Ton laufen 5,25 Mbit/s
   sauber (60 s), 6 Mbit/s und mehr verwerfen gleichmäßig Bilder. Mit Stille lag die Summe aus
   Video und Ton bei 5,02 Mbit/s über 5 Stunden; 5,25 ist die gemessene Grenze.
-- **Ton (neu ausgewertet und geprüft 15.11., Befunde §33):** **528×576i, Video 3800 kbit/s, Ton
-  192 kbit/s mit MG-Tonpuffer p04 = 256 Seiten** lief zweimal 2 Minuten sauber, zuletzt bei vollem
-  Pegel (Ton 191 kbit/s, alle Blöcke da, kein Bild verloren). Die alte Erklärung „große Tonblöcke
-  töten den Tonpfad“ ist damit widerlegt. Vermutete Ursachen der früheren Ausfälle: Pinnacles
-  kleiner Tonpuffer (48 Seiten fassen bei 192 kbit/s nur 3,6 s, der Host holt aber erst nach 2–4 s
-  ab) und ein niedrigerer Durchsatz mit echtem Ton (gerechnet 4,2–4,45 Mbit/s). **Offen:** wie viel
-  Video neben dem Ton geht (Test 4800 + 192) und der 30-Minuten-Lauf.
+- **Ton (geprüft 15.11., Befunde §33):** **528×576i, Video 4800 kbit/s, Ton 192 kbit/s mit
+  MG-Tonpuffer p04 = 256 Seiten** lief 131 Sekunden sauber bei vollem Pegel: kein Bild verloren,
+  Ton 191 kbit/s vollständig, Summe 4,99 Mbit/s – das Niveau von AE ohne Ton. Davor 3800 + 192
+  zweimal sauber. Zwei frühere Erklärungen sind damit widerlegt: große Tonblöcke töten den Tonpfad
+  nicht, und echter Ton kostet keinen Durchsatz. Die Ausfälle vom Oktober hängen an Pinnacles
+  kleinem Tonpuffer (48 Seiten fassen bei 192 kbit/s nur 3,6 s, der Host holt aber erst nach
+  2–4 s ab); ganz geklärt sind sie nicht. **Offen:** 30-Minuten-Lauf und 4-GiB-Wechsel mit Ton.
 - **Über der Mauer:** 8000 kbit/s beendet die PVT nach 28 Sekunden von selbst; der MP4-Index
   enthält dann nur die letzten Einträge jeder Tabelle (wie bei „nur Video“).
 - **Breite 528:** an die Auflösung einer 1/3"-CCD-Kamera (512 Punkte) angepasst, spart gemessen
@@ -73,7 +73,7 @@ brauchen nur die Standardbibliothek; `ton_schleife.py` braucht `ffmpeg` im PATH 
 python3 werkzeuge/pvt_check.py AUFNAHME.MP4 --out ergebnisse   # Bild- und Tonspur, Aussetzer, Raten, Kopfangaben
 python3 werkzeuge/ton_schleife.py AUFNAHME.MP4                 # Ton gegen eine Schleifen-Audioquelle prüfen
 python3 werkzeuge/mp4_reparatur.py AUFNAHME.MP4                # Index einer Nur-Video-Aufnahme neu bauen
-python3 werkzeuge/build_ai.py build CFUPDATE_AE.BIN ausgabe 528 4500 96 rein=1   # wie der Baukasten, nur ohne Browser
+python3 werkzeuge/build_ai.py build CFUPDATE_AE.BIN ausgabe 528 4800 192 256 rein=1   # wie der Baukasten, nur ohne Browser
 ```
 
 ## Wie der Baukasten arbeitet

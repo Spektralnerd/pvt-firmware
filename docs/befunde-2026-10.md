@@ -13,13 +13,15 @@ Messbefund**, **Code-/Modellbefund**, **Hypothese**.
 
 ## 0. In fünf Minuten einsteigen
 
-**Kurzfassung 15.11.2026, 15:00: Neuauswertung (Abschnitt 33). Der Ton scheitert nicht an der
-Blockgröße: 528 · 3800 · Ton 192 · p04 256 lief am Gerät zweimal 2 min sauber, zuletzt bei vollem
-Pegel mit 191 kbit/s (33.7, 33.10). Vermutete Ursachen der alten Ausfälle: der kleine MG-Tonpuffer
-(p04 = 48 Seiten) und ein niedrigerer Host-Durchsatz mit echtem Ton (gerechnet 4,2–4,45 statt
-5,2 Mbit/s) – beides noch nicht getrennt bewiesen. 8000 kbit/s beendet die PVT nach 28 s von
-selbst mit unbrauchbarem Index (33.9, 33.10). Nächster Schritt: 4800 + 192 (33.11), danach
-30 min. Abschnitte 26, 27, 30 und 32 sind in 33.3 berichtigt.**
+**Kurzfassung 15.11.2026, 15:45: Neuauswertung und Gerätetests (Abschnitt 33). 528 · Video 4800 ·
+Ton 192 · p04 256 lief 131 s sauber bei vollem Pegel (Summe 4,99 Mbit/s = AE-Niveau; 33.12), davor
+3800 + 192 zweimal (33.7, 33.10). Zwei alte Erklärungen sind gemessen widerlegt: die Blockgröße
+tötet den Ton nicht, und echter Ton kostet keinen Durchsatz. Die Oktober-Ausfälle hängen am
+kleinen MG-Tonpuffer p04 = 48 (Überlauf beim Start plausibel; die Bildverluste sind noch nicht
+erklärt, evtl. Plattenzustand). 8000 kbit/s beendet die PVT nach 28 s von selbst mit unbrauchbarem
+Index (33.9, 33.10). Nächster Schritt: 30 min mit 4800 + 192, dann der 4-GiB-Wechsel. Abschnitte 26,
+27, 30 und 32 sind in 33.3 berichtigt; die Durchsatz-Zahlen in 33.2 und der Testplan 33.6 sind durch
+33.12 überholt.**
 
 **Kurzfassung 10.10.2026, 16:30: Beide Fehler sind gelöst und am Gerät bestätigt
 (Abschnitte 13–16). Vorführstand = Firmware AE auf LED1
@@ -1528,3 +1530,33 @@ mindestens 4,87 (5 min: 4,92) und die Durchsatz-These aus 33.2 ist falsch – da
 den 30-min-Lauf. Bleibt der Ton bei Summe 4,99 vollständig (VID00007 verlor ihn bei 4,69 mit p04 48),
 ist zugleich der Tonpuffer als Schutz des Tons belegt. Paket: `PVT_TEST_V4800_A192_P256.zip` (mit dem geprüften 3800er-Stand als
 Rückweg). Baukasten 1.6.1: Vorlagen und bekannte Builds entsprechend.
+
+**33.12 Ergebnis 4800 + 192 (15.11., 15:37): sauber – die Durchsatz-These aus 33.2 ist widerlegt.**
+`VID00001_4800er-Lauf.MP4`, Firmware `AE_V4800_A192_B528_P256_REIN`, 131,44 s, lauter Ton:
+- Video 3.286 Bilder, 4,797 Mbit/s, QP 24–26, **0 leer / 0 klein / 0 Teilbild**, mdhd = stts;
+  höchstes 1-s-Fenster 5,78 Mbit/s.
+- Ton 6.159 Blöcke = 131,39 s, **191,2 kbit/s, vollständig in allen 131 Sekunden** (Median 512 B).
+  Ton minus Video −0,05 s. Pegel im Mittel −13,2 dB, Spitze −1,8 dB. ffmpeg decodiert beide
+  Spuren ohne Fehler.
+- Nutzdaten 81,96 MB in 131,44 s = **4,99 Mbit/s** (Steigung im Mittelteil 4,97).
+- Damit p03 dabei nicht überläuft, muss der Host mindestens 4,78 Mbit/s (Startverzögerung 1 s) bis
+  4,90 Mbit/s (4 s) weggeschrieben haben – mit lautem echtem Ton. **Die Schätzung „mit echtem Ton
+  nur 4,2–4,45 Mbit/s“ aus 33.2 ist falsch**, jedenfalls mit p04 = 256. Die Anpassungen dort
+  (W = 4,41 usw.) beschreiben nur, wann im Oktober die Puffer überliefen, keine Eigenschaft des Hosts.
+- Stand der drei Aussagen aus 33.2: (1) Blockgröße als Ursache – widerlegt (33.10). (2) p04 = 48
+  läuft bei 192 kbit/s schon beim Start über (VID00007: Loch bei 4,00 s bei rechnerisch vollem
+  Puffer) – weiter plausibel, nicht gegengeprüft. (3) „Ton kostet Durchsatz“ – widerlegt.
+- Offen ist damit, warum im Oktober mit echtem Ton bei Summen von 4,6 bis 5,1 Mbit/s Bilder
+  fehlten (VID00007/08/10). Kandidaten: (a) Folge des kleinen Tonpuffers – der Ablauf im MG
+  gerät durcheinander, sobald p04 voll ist; (b) Zustand der Platte am 20.10. (mehr belegt,
+  Startverzögerung ~4 s statt heute ~2 s, Stockungen). Für (a) spricht: am selben Tag auf derselben
+  Platte lief „nur Video“ mit 5,25 Mbit/s 60 s ohne Bildverlust (VID00012) und AE mit Stille 5 h.
+  Trennbar mit einer Gegenprobe auf der heutigen Platte: 4800 + 192 mit p04 48
+  (`AE_V4800_A192_B528_REIN`, SHA `bbea0e2d3adc38f93e291d47be0cd381bf234f749fc94506f129a33eb61d8ac3`).
+- **Betriebspunkt-Kandidat: 528 · Video 4800 · Ton 192 · p04 256** (Summe 4,99 = AE-Niveau).
+  Offen: 30 min mit Ton; danach ohne Löschen eine kurze zweite Aufnahme (Start auf gefüllter
+  Platte); 4-GiB-Wechsel (bei 4,99 Mbit/s nach 2 h 23 min). Höher nicht sinnvoll: die Mauer liegt
+  bei 5,1–5,25, und bei 5,25 ging der Index schon verloren (VID00012).
+- Baukasten 1.6.2 und `build_ai.py`: die Warnung „mit Ton nur 4,2–4,45“ ist entfernt; für p04 < 256
+  bleibt der Erfahrungssatz vom Oktober (Verluste ab Summe 4,6). Bericht:
+  `docs/berichte/V4800_A192_B528_P256_REIN_VOLLER_PEGEL_pvtcheck.txt`.

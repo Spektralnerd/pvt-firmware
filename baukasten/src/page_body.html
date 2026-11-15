@@ -17,8 +17,8 @@
     <h2><span class="n">2</span>Einstellungen</h2>
     <div class="presets" id="presets">
       <button class="btn sm" type="button" data-preset="ae">AE (Vorführstand)</button>
-      <button class="btn sm" type="button" data-preset="t1">Mit Ton, geprüft 15.11.: 528 · 3800 · Ton 192 · p04 256</button>
-      <button class="btn sm" type="button" data-preset="t4">Nächster Test: 528 · 4800 · Ton 192 · p04 256</button>
+      <button class="btn sm" type="button" data-preset="t4">Mit Ton, geprüft 15.11.: 528 · 4800 · Ton 192 · p04 256</button>
+      <button class="btn sm" type="button" data-preset="t1">Mit Ton, Reserve: 528 · 3800 · Ton 192 · p04 256 (geprüft)</button>
       <button class="btn sm" type="button" data-preset="ton96">Alt: 528 · 4500 · Ton 96 (Tonverlust ab 70 s)</button>
       <button class="btn sm" type="button" data-preset="nurvideo">Nur Video: AE ohne Ton (Index reparieren)</button>
       <button class="btn sm" type="button" data-preset="rein">AE rein (alle LEDs wie LED1)</button>
@@ -29,13 +29,13 @@
           <label for="video">Videoziel (kbit/s)</label>
           <input type="number" id="video" list="dl-video" min="1" step="1" value="5000">
           <datalist id="dl-video"><option value="3600"><option value="4200"><option value="4500"><option value="4800"><option value="5000"><option value="6000"><option value="8000"><option value="10000"></datalist>
-          <div class="hint">Frei wählbar. AE: 5000 (ohne Ton 5 h bewährt). Gemessene Host-Mauer ohne Ton 5,25 Mbit/s Summe; mit echtem Ton kam der Host in den alten Aufnahmen (p04 48) rechnerisch nur auf 4,2 bis 4,45 (5000 + 96 kippte nach 19 s, 4500 + 96 nach 70 s). Am Gerät sauber: 3800 + 192 mit p04 256 (15.11.). MG-Datenblatt: 64 kbit/s bis 10 Mbit/s. Unter 3600 setzt der ColdFire MG-Param 10 auf 1 statt 2 (anderer Encoder-Modus wie die Original-Stufen).</div>
+          <div class="hint">Frei wählbar. AE: 5000 (ohne Ton 5 h bewährt). Gemessene Host-Mauer ohne Ton 5,25 Mbit/s Summe; mit Ton und p04 256 lief 4800 + 192 (Summe 4,99) am 15.11. sauber. Mit Pinnacles p04 48 gab es im Oktober mit echtem Ton schon ab Summe 4,6 Verluste. MG-Datenblatt: 64 kbit/s bis 10 Mbit/s. Unter 3600 setzt der ColdFire MG-Param 10 auf 1 statt 2 (anderer Encoder-Modus wie die Original-Stufen).</div>
         </div>
         <div class="field">
           <label for="audio">Audio (kbit/s AAC, 0 = aus)</label>
           <input type="number" id="audio" list="dl-audio" min="0" step="1" value="384">
           <datalist id="dl-audio"><option value="0"><option value="8"><option value="16"><option value="24"><option value="32"><option value="48"><option value="64"><option value="80"><option value="96"><option value="112"><option value="128"><option value="160"><option value="192"><option value="256"><option value="320"><option value="384"></datalist>
-          <div class="hint">Frei wählbar, MG-Datenblatt 8–384. 192 läuft mit p04 256 (geprüft 15.11.: 3800 + 192 bei vollem Pegel, 2 min vollständig). Mit Pinnacles p04 = 48 läuft der Tonpuffer rechnerisch in den ersten 4 s über; an der Blockgröße liegt es nicht. 0 = nur Video (ein Byte): geprüft 20.10., Aufnahme makellos bei 5,25 Mbit/s, aber der Index wird unvollständig geschrieben – Datei mit mp4_reparatur.py reparieren.</div>
+          <div class="hint">Frei wählbar, MG-Datenblatt 8–384. 192 läuft mit p04 256 (geprüft 15.11.: 3800 + 192 und 4800 + 192 bei vollem Pegel, je 2 min vollständig). Mit Pinnacles p04 = 48 läuft der Tonpuffer rechnerisch in den ersten 4 s über; an der Blockgröße liegt es nicht. 0 = nur Video (ein Byte): geprüft 20.10., Aufnahme makellos bei 5,25 Mbit/s, aber der Index wird unvollständig geschrieben – Datei mit mp4_reparatur.py reparieren.</div>
         </div>
         <div class="field">
           <label for="width">Bildbreite PAL (Pixel)</label>
@@ -53,7 +53,7 @@
           <label for="p04">MG-Audiopuffer p04 (Seiten à 2 KB)</label>
           <input type="number" id="p04" list="dl-p04" min="1" step="1" value="48">
           <datalist id="dl-p04"><option value="48"><option value="96"><option value="128"><option value="192"><option value="256"></datalist>
-          <div class="hint">Pinnacle/AE: 48 (96 KB) – das sind bei 192 kbit/s nur 3,6 s Ton, der Host holt aber erst nach rund 4 s ab. Mobilygen-Standard: 256 (512 KB). Für Aufnahmen mit Ton 256 wählen; passt laut Emulation in den MG-Speicher (5025 von 5120 Seiten) und lief am 15.11. am Gerät (3800 + 192).</div>
+          <div class="hint">Pinnacle/AE: 48 (96 KB) – das sind bei 192 kbit/s nur 3,6 s Ton, der Host holt aber erst nach rund 4 s ab. Mobilygen-Standard: 256 (512 KB). Für Aufnahmen mit Ton 256 wählen; passt laut Emulation in den MG-Speicher (5025 von 5120 Seiten) und lief am 15.11. am Gerät (3800 + 192 und 4800 + 192).</div>
         </div>
         <div class="field check">
           <input type="checkbox" id="rein">
@@ -168,5 +168,5 @@
   </section>
 </main>
 <footer>
-  <p>Baukasten 1.6.1 · Stand 15.11.2026, 15:00. Freie Werte, nur technische Sperren. Experimentelle Firmware: jede neue Kombination hat 0 Hardwaretests. Rückkehrdateien (AE und Original) liegen jedem Paket bei. Backups und Dumps behalten.</p>
+  <p>Baukasten 1.6.2 · Stand 15.11.2026, 15:45. Freie Werte, nur technische Sperren. Experimentelle Firmware: jede neue Kombination hat 0 Hardwaretests. Rückkehrdateien (AE und Original) liegen jedem Paket bei. Backups und Dumps behalten.</p>
 </footer>

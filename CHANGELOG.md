@@ -1,6 +1,7 @@
 # Änderungen
 
 ## Baukasten
+- **1.6.2** (15.11.2026, 15:45): 528 · 4800 · Ton 192 · p04 256 am Gerät sauber (131 s, voller Pegel, Summe 4,99 Mbit/s). Die Schätzung „mit Ton nur 4,2–4,45 Mbit/s“ aus 1.6 war falsch und ist entfernt; die Warnung gilt nur noch für p04 unter 256. Vorlagen: geprüfter Stand 4800 + 192, Reserve 3800 + 192.
 - **1.6.1** (15.11.2026, 15:00): Ergebnisse vom Gerät eingetragen – 528 · 3800 · Ton 192 · p04 256 geprüft (zwei Läufe à 2 min, voller Pegel), Vorlage „Nächster Test“ 528 · 4800 · Ton 192 · p04 256; die 8000er-Messläufe sind gestrichen (PVT stoppt nach 28 s, Index unbrauchbar).
 - **1.6** (15.11.2026): Hinweise nach der Neuauswertung berichtigt (Befunde §33) – Tonpufferzeit aus p04 und Tonrate statt „Blockgröße“, Durchsatz mit echtem Ton 4,2–4,45 Mbit/s, Puffer-Regelung nicht mit dem kleinen 1,25-MBit-Modell; Vorlagen „Test 1“ (528 · 3800 · Ton 192 · p04 256) und zwei Messläufe (8000 + Ton). Kern unverändert, alle Hashes bleiben.
 - **1.5** (21.10.2026): Ratenregelung des MG einstellbar – Größentoleranz RC7 (Faktor × Video), Transferrate RC11, Puffer-Regelung RC9/RC10/RC12 für LED1 (Leaky Bucket, wie bei AB).
