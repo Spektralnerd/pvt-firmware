@@ -17,10 +17,11 @@
     <h2><span class="n">2</span>Einstellungen</h2>
     <div class="presets" id="presets">
       <button class="btn sm" type="button" data-preset="ae">AE (Vorführstand)</button>
-      <button class="btn sm" type="button" data-preset="ton96">Mit Ton: 528 · 4500 · Ton 96 (geprüft 20.10.)</button>
-      <button class="btn sm" type="button" data-preset="ton64">Mit Ton, Reserve: 528 · 4500 · Ton 64</button>
-      <button class="btn sm" type="button" data-preset="ai528">AI-Test: 528 · 4800 · Ton 192</button>
-      <button class="btn sm" type="button" data-preset="nurvideo">Nur Video: AE ohne Ton (1 Byte, ungeprüft)</button>
+      <button class="btn sm" type="button" data-preset="t1">Test 1: 528 · 3800 · Ton 192 · p04 256</button>
+      <button class="btn sm" type="button" data-preset="t2">Messlauf: 528 · 8000 · Ton 192 · p04 256</button>
+      <button class="btn sm" type="button" data-preset="t3">Messlauf: 528 · 8000 · Ton 32 · p04 256</button>
+      <button class="btn sm" type="button" data-preset="ton96">Alt: 528 · 4500 · Ton 96 (Tonverlust ab 70 s)</button>
+      <button class="btn sm" type="button" data-preset="nurvideo">Nur Video: AE ohne Ton (Index reparieren)</button>
       <button class="btn sm" type="button" data-preset="rein">AE rein (alle LEDs wie LED1)</button>
     </div>
     <form id="form" autocomplete="off">
@@ -29,13 +30,13 @@
           <label for="video">Videoziel (kbit/s)</label>
           <input type="number" id="video" list="dl-video" min="1" step="1" value="5000">
           <datalist id="dl-video"><option value="3600"><option value="4200"><option value="4500"><option value="4800"><option value="5000"><option value="6000"><option value="8000"><option value="10000"></datalist>
-          <div class="hint">Frei wählbar. AE: 5000 (ohne Ton 5 h bewährt). Gemessene Host-Mauer 5,25 Mbit/s Summe; mit echtem Ton kippte 5000 + 96, 4500 + 96 hielt. MG-Datenblatt: 64 kbit/s bis 10 Mbit/s. Unter 3600 setzt der ColdFire MG-Param 10 auf 1 statt 2 (anderer Encoder-Modus wie die Original-Stufen).</div>
+          <div class="hint">Frei wählbar. AE: 5000 (ohne Ton 5 h bewährt). Gemessene Host-Mauer ohne Ton 5,25 Mbit/s Summe; mit echtem Ton kam der Host nur auf 4,2 bis 4,45 (5000 + 96 kippte nach 19 s, 4500 + 96 nach 70 s). MG-Datenblatt: 64 kbit/s bis 10 Mbit/s. Unter 3600 setzt der ColdFire MG-Param 10 auf 1 statt 2 (anderer Encoder-Modus wie die Original-Stufen).</div>
         </div>
         <div class="field">
           <label for="audio">Audio (kbit/s AAC, 0 = aus)</label>
           <input type="number" id="audio" list="dl-audio" min="0" step="1" value="384">
           <datalist id="dl-audio"><option value="0"><option value="8"><option value="16"><option value="24"><option value="32"><option value="48"><option value="64"><option value="80"><option value="96"><option value="112"><option value="128"><option value="160"><option value="192"><option value="256"><option value="320"><option value="384"></datalist>
-          <div class="hint">Frei wählbar, MG-Datenblatt 8–384. Gemessen 20.10.: 384 und 192 (Blöcke ≥ 450 Byte) töten den Tonpfad binnen 20 s, 96 hält (4500 + 96: 99 % Ton). 0 = nur Video (ein Byte): geprüft 20.10., Aufnahme makellos bei 5,25 Mbit/s, aber der Index wird unvollständig geschrieben – Datei mit mp4_reparatur.py reparieren.</div>
+          <div class="hint">Frei wählbar, MG-Datenblatt 8–384. Neu gerechnet 15.11.: 192 und 384 scheiterten am kleinen MG-Tonpuffer (p04 = 48 Seiten läuft in den ersten 4 s über), nicht an der Blockgröße – mit p04 256 neu zu prüfen. 0 = nur Video (ein Byte): geprüft 20.10., Aufnahme makellos bei 5,25 Mbit/s, aber der Index wird unvollständig geschrieben – Datei mit mp4_reparatur.py reparieren.</div>
         </div>
         <div class="field">
           <label for="width">Bildbreite PAL (Pixel)</label>
@@ -53,7 +54,7 @@
           <label for="p04">MG-Audiopuffer p04 (Seiten à 2 KB)</label>
           <input type="number" id="p04" list="dl-p04" min="1" step="1" value="48">
           <datalist id="dl-p04"><option value="48"><option value="96"><option value="128"><option value="192"><option value="256"></datalist>
-          <div class="hint">AE: 48 (96 KB). Nur wenn Ton trotz gesenkter Summe abbricht. Emulation: 256 Seiten passen in den MG-Speicher (5025 von 5120 Seiten belegt).</div>
+          <div class="hint">Pinnacle/AE: 48 (96 KB) – das sind bei 192 kbit/s nur 3,6 s Ton, der Host holt aber erst nach rund 4 s ab. Mobilygen-Standard: 256 (512 KB). Für Aufnahmen mit Ton 256 wählen; passt laut Emulation in den MG-Speicher (5025 von 5120 Seiten), am Gerät noch ungeprüft.</div>
         </div>
         <div class="field check">
           <input type="checkbox" id="rein">
@@ -72,7 +73,7 @@
             <label for="p03">MG-Videopuffer p03 (Seiten à 2 KB)</label>
             <input type="number" id="p03" list="dl-p03" min="1" step="1" value="2048">
             <datalist id="dl-p03"><option value="2048"><option value="1536"><option value="1024"><option value="832"></datalist>
-            <div class="hint">AE: 2048 (4 MB). AB lief mit 832. Speicherplan: p03 + p04 bis 2304 Seiten passen nachweislich.</div>
+            <div class="hint">AE: 2048 (4 MB). Pinnacle und AB: 832. Speicherplan: p03 + p04 bis 2304 Seiten passen nachweislich.</div>
           </div>
           <div class="field">
             <label>GOP-Länge (Bilder) LED1 · LED2 · LED3</label>
@@ -109,12 +110,12 @@
           </div>
           <div class="field check">
             <input type="checkbox" id="rc9">
-            <label for="rc9">Puffer-Regelung RC9 für LED1 einschalten<div class="hint">AE: LED1 aus (nur Größenregelung), LED2/LED3 an. AB lief mit Puffer-Regelung auf LED1 (1,25 MBit, 5 Mbit/s, 125 ms) – geprüft. Damit hält der MG die Rate über das Pufferfenster unter der Transferrate: das Modell für einen begrenzten Kanal.</div></label>
+            <label for="rc9">Puffer-Regelung RC9 für LED1 einschalten<div class="hint">AE: LED1 aus (nur Größenregelung), LED2/LED3 an (5 MBit/45.000 und 10 MBit/90.000 – sauber getestet). Der MG hält damit die Rate über das Pufferfenster unter der Transferrate. Vorsicht mit kleinen Modellen: mit 1,25 MBit/125 ms verloren AC/AD bei Tageslicht 6 bis 13 % der Videozeit.</div></label>
           </div>
           <div class="field">
             <label>Pufferbits RC10 · Startverzögerung RC12 (90-kHz-Ticks)</label>
             <div class="tfrow"><input type="number" id="rc10" min="1" step="1" value="1250000" aria-label="RC10 Pufferbits"><input type="number" id="rc12" min="0" step="1" value="11250" aria-label="RC12 Startverzögerung"></div>
-            <div class="hint">AE LED1: 1.250.000 Bit (0,25 s bei 5 Mbit/s) und 11.250 Ticks (125 ms). LED2: 5 MBit / 45.000, LED3: 10 MBit / 90.000. Nur wirksam mit Puffer-Regelung.</div>
+            <div class="hint">Vorgabe 1.250.000 / 11.250 ist das alte kleine Modell (bei AE LED1 abgeschaltet). Für Versuche mit Puffer-Regelung 5.000.000 / 45.000 (AE LED2) oder 10.000.000 / 90.000 (AE LED3) eintragen. Nur wirksam mit Puffer-Regelung.</div>
           </div>
         </div>
         <p class="small muted mono" id="rcInfo" style="margin-top:10px"></p>
@@ -156,7 +157,7 @@
         <li>Bildgröße NTSC: Breite <code>0x2B81E</code>, <code>0x0C042</code>, <code>0x2B924</code>; Höhe <code>0x2B82A</code>, <code>0x2B932</code>, <code>0x2E044</code>.</li>
         <li>GOP je LED: <code>0x2C086</code>, <code>0x2C090</code>, <code>0x2C09A</code> (MG-Objekt 3, Param 24).</li>
         <li>Abtastrate: <code>0x0C67A</code> (→ MG Objekt 1, Param 7 AUDIO_SAMPLE_RATE), <code>0x1AA9E</code> (Host-Konfiguration, RAM-Struktur der Aufzeichnung), <code>0x2AA0C</code> (mp4a-Vorlage des MP4-Schreibers). Alle drei im Original vorhanden.</li>
-        <li>MG-Tabelle: Videopuffer p03 bei <code>0x2A626</code>, Audiopuffer p04 bei <code>0x2A62A</code>.</li>
+        <li>MG-Tabelle: Videopuffer p03 bei <code>0x2A626</code>, Audiopuffer p04 bei <code>0x2A62A</code>. Pinnacle: 832 und 48 Seiten, Mobilygen-Standard im MG: 2048 und 256.</li>
         <li>AE rein: die sechs RC-Konstanten von LED1 (ab <code>0x2E11E</code>, Abstand 0x22) werden nach LED2 (+0x158) und LED3 (+0x2B0) kopiert.</li>
         <li>TF-Stufe: die <code>moveq</code>-Werte bei <code>0x2B177</code>, <code>0x2B17D</code>, <code>0x2B183</code>.</li>
       </ul>
@@ -168,5 +169,5 @@
   </section>
 </main>
 <footer>
-  <p>Baukasten 1.5 · Stand 21.10.2026, 07:30. Freie Werte, nur technische Sperren. Experimentelle Firmware: jede neue Kombination hat 0 Hardwaretests. Rückkehrdateien (AE und Original) liegen jedem Paket bei. Backups und Dumps behalten.</p>
+  <p>Baukasten 1.6 · Stand 15.11.2026. Freie Werte, nur technische Sperren. Experimentelle Firmware: jede neue Kombination hat 0 Hardwaretests. Rückkehrdateien (AE und Original) liegen jedem Paket bei. Backups und Dumps behalten.</p>
 </footer>

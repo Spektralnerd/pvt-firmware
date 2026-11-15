@@ -2,6 +2,16 @@ PINNACLE VIDEO TRANSFER - TEST AI: BREITE AN DIE KAMERA ANGEPASST (528x576i) + T
 Stand 20.10.2026, 22:30. EXPERIMENTELL. Basis: AE (Vorfuehrstand). Breite 528 am Geraet bestaetigt (VID00007/08/10).
 Gleicher Updateablauf wie immer, NUR EINE BIN auf dem Stick. Test immer auf LED1.
 
+NACHTRAG 15.11.2026 (Befunde Abschnitt 33) - DREI AUSSAGEN UNTEN SIND UEBERHOLT:
+- Nicht die Blockgroesse toetet den Tonpfad, sondern der kleine MG-Tonpuffer: p04 = 48 Seiten
+  fassen bei 192 kbit/s nur 3,6 s Ton, der Host holt aber erst rund 4 s nach dem Start ab.
+  Fuer Ton p04 = 256 nehmen (Mobilygen-Standard), dann ist auch 192 wieder einen Versuch wert.
+- Mit echtem Ton schaffte der Host nur 4,2-4,45 Mbit/s Summe (ohne Ton 5,2). 4500 + 96 ist
+  deshalb kein Dauerbetriebspunkt (Tonverlust nach 70 s, danach alle 1-2 min).
+- AI_CHANNELS wird doch gesendet (Wert 1 = Stereo); Mono bleibt per Zahlenwert unerreichbar.
+Neuer Testplan: Test 1 = 528, 3800, Ton 192, p04 256, rein; danach zwei Messlaeufe mit
+8000 + Ton (Baukasten 1.6, Vorlagen "Test 1" und "Messlauf").
+
 IDEE
 Weniger Video-Mbit nur zusammen mit weniger Pixeln. Die Kamera (AVC 571, Sensor 512
 Punkte waagerecht, 400 TVL) liefert kaum etwas oberhalb ~5 MHz; 528 Abtastwerte

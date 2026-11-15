@@ -13,6 +13,11 @@ Messbefund**, **Code-/Modellbefund**, **Hypothese**.
 
 ## 0. In fünf Minuten einsteigen
 
+**Kurzfassung 15.11.2026: Neuauswertung (Abschnitt 33). Der Ton scheitert am kleinen
+MG-Tonpuffer (p04 = 48 Seiten) und an einem niedrigeren Host-Durchsatz mit echtem Ton
+(gerechnet 4,2–4,45 statt 5,2 Mbit/s), nicht an der Blockgröße. Nächster Schritt: Test 1 mit
+p04 = 256 und zwei Messläufe (33.6). Abschnitte 26, 27, 30 und 32 sind dort berichtigt.**
+
 **Kurzfassung 10.10.2026, 16:30: Beide Fehler sind gelöst und am Gerät bestätigt
 (Abschnitte 13–16). Vorführstand = Firmware AE auf LED1
 (`PVT_AE_LED1_VORFUEHRSTAND.zip`), 2 h 30 min Langzeitlauf mit 4-GiB-Wechsel ohne
@@ -1326,3 +1331,98 @@ Faktoren aus dem LED1-Block ab (AB wird als `_B1-1250000-11250_VP832` erkannt). 
 RC7 → Param 7 in allen LEDs, RC9/10/11/12 → Params 9–12 LED1. Labels `_T1000`, `_TR1100`,
 `_B1-2500000-22500`. Hashes: 528/5000/aus/rc7=1000 `3a89c9f4…`; 528/5000/aus/Bucket
 2,5 MBit/22500/×1100/rein `b950a847…` (beide Werkzeuge identisch). Am Gerät ungeprüft.
+
+## 33. Neuauswertung: Puffermodell, Tonpuffer p04, Durchsatz mit Ton (Baukasten 1.6, pvt_check 1.7) – 15.11.2026
+
+Anlass: nach einer Pause das ganze Projekt neu durchgesehen und VID00007/08/10/12 sowie AF8
+(`VID00001_AF.MP4`) mit einem einfachen Puffermodell nachgerechnet. Ergebnis: **Der Ton
+scheitert am kleinen MG-Tonpuffer (p04 = 48 Seiten) und an einem niedrigeren Durchsatz mit
+echtem Ton, nicht an der Blockgröße.** Status: Modellbefund aus Dateimessungen, am Gerät
+noch ungeprüft (Test 1 unten).
+
+**33.1 Modell.** Der MG erzeugt einen nach Zeitstempeln verschachtelten Strom (Dateireihenfolge
+`V a a V a a …`, 15 Tonblöcke je 8 Bilder = 46,875 gegen 25 je Sekunde). Video liegt im Pool
+p03 („mux vid“, AE 2048 Seiten à 2048 B = 4,19 MB), Ton im Pool p04 („mux aud“, Pinnacle
+48 Seiten = 98.304 B), je Tonblock rund 64 B Verwaltung. Der Host beginnt erst τ0 ≈ 3,8–4,0 s
+nach Aufnahmestart mit dem Abholen und holt dann in Mux-Reihenfolge mit der Rate W. Ein
+Rückstand von T Sekunden belegt T × Tonrate in p04 und T × Videorate in p03. Läuft p04 über,
+verwirft der MG Tonblöcke (Löcher, später „tot“), läuft p03 über, fehlen Bilder.
+Tonpufferzeit τa = p04 × 2048 / (kbit/s × 125 + 64 × 46,875):
+
+| p04 | 384 | 192 | 128 | 96 | 64 | 32 kbit/s |
+|---|---|---|---|---|---|---|
+| 48 Seiten | 1,9 s | 3,6 s | 5,2 s | 6,6 s | 8,9 s | 14,0 s |
+| 256 Seiten | 10,3 s | 19,4 s | 27,6 s | 35,0 s | 47,7 s | 74,9 s |
+
+**33.2 Belege.**
+- VID00007 (528, 4500 + 192): bis zum ersten Loch (Bild 100 = 4,00 s) stehen 186 Tonblöcke
+  = 85.920 B in der Datei; mit 64 B je Block 97.824 B = 47,8 Seiten – p04 genau voll, bevor
+  der Host anfängt (τa 3,6 s < τ0). Die „Blockgröße über 450 B“ aus §26/§30 war eine
+  Scheinursache: 192 und 384 kbit/s laufen mit 48 Seiten schon beim Start über.
+- VID00010 (528, 4500 + 96): erzeugte Rate flach 4,6 Mbit/s (1-s-Werte 4,3–4,9, keine Spitze),
+  erster verlorener Tonblock bei 70,52 s. Das Modell trifft das mit W = 4,41 Mbit/s, τ0 = 3,8 s
+  (Tonpool 99 % bei 70,4 s). Mit W ≥ 5,0 wären beide Pools ab 50 s leer – der Verlust wäre
+  nicht erklärbar. Gegenprobe: nach 70 s fehlen rund 2,1 s Video und 3,1 s Ton = 0,2 Mbit/s,
+  also wieder W ≈ 4,4.
+- VID00008 (528, 5000 + 96): Videopool rechnerisch voll bei rund 19 s, W ≈ 4,3; Nutzdaten
+  über die Kopfdauer gerechnet höchstens 4,6–4,76 Mbit/s.
+- Ohne Ton oder mit Stille: AF8 5,19 Mbit/s (Steigung Dateiposition gegen Tonzeit, 20–131 s;
+  über alles 5,25), VID00012 braucht W ≥ 5,05; AE mit Stille 5 h bei 5,02.
+- **Mit echtem Ton also W ≈ 4,2–4,45 Mbit/s (Anpassung) statt 5,2 – rund 0,8 Mbit/s weniger**,
+  auch in VID00007, wo ab 19 s gar kein Ton mehr in der Datei landet. Hypothese: Last im MG
+  (AAC-Encoder mit echtem Signal bremst die Bedienung der Host-Schnittstelle), nicht die
+  Bytes auf dem Host-Weg. Ungeprüft; die Messläufe unten entscheiden.
+
+**33.3 Berichtigungen.**
+- §18: „Stau nach 4,21 MB = der 4-MiB-Puffer“ ist vor allem die Startverzögerung: bis 4,16 s
+  hatte der Host fast nichts abgeholt. Auf der frisch formatierten Intenso-Platte kam der Stau
+  erst nach 9,5 s (Start rund 1 s) → Hypothese: τ0 hängt vom Plattenzustand ab (FAT-Suche).
+- §26/§30: nicht die Blockgröße tötet den Tonpfad, sondern p04 (siehe 33.2).
+- §27 und Baukasten-Text: „AI_CHANNELS wird nie gesendet“ war falsch. Der ColdFire sendet
+  `(3,1026,19,1)` = Stereo (MG-Param 19: Werte 1..4 → 0..3). Mono bleibt per Zahlenwert
+  unerreichbar, weil der Wert aus einer geteilten Konstante kommt (0x0C667, moveq 1 für
+  mehrere Befehle).
+- §32 und Baukasten 1.5: die AB-Werte der Puffer-Regelung (1,25 MBit, 125 ms) sind keine
+  Empfehlung – nach §13–14 kostete dieses Modell bei AC/AD 6–13 % Videozeit. Sauber getestet
+  sind 5 MBit/45.000 (AE LED2) und 10 MBit/90.000 (AE LED3).
+- „mdhd Video = Echtzeit“ gilt nicht bei Überlast (AF8: mdhd 90,6 s, echt 140,6 s). Echtzeit
+  ist die Tondauer, solange der Ton lückenlos ist, sonst die Stoppuhr.
+- 4500 + 96 ist kein Dauerbetriebspunkt (Summe 4,6 > W): die Störung käme alle 1–2 min.
+
+**33.4 MG-Tabellen (nur MG-Code gelesen).** Pinnacles Produkttabelle im ColdFire-Abbild
+(0x2A61A, Kopf 2/0/0/84) gegen die Mobilygen-Vorgabe im MG-Abbild (0xF9D6C):
+p01 1024/2048, p02 5120/14336, **p03 832/2048, p04 48/256**, p08 6/8, p09 8/32, p10 2/4,
+p12 832/2048, p13 48/512, p18 8/16. AE hat nur p03 auf 2048 gesetzt.
+Verteiler der allgemeinen Encoder-Parameter (Objekt 3, Opcode 1026; Tabelle MG 0xCEE98 + 4·p):
+1 BITSTREAM_TYPE, 9, 10 OPERATIONAL_MODE, 11 (speichert den Wert in obj+0x20, Vorgabe 4096 –
+Bedeutung offen), 12, 17 ENC_AV_SELECT, 18 PREV_AV_SELECT, 19 AI_CHANNELS, 21 VENC_BITRATE,
+24 GOP, 39, 40 ENC_INPUT_SELECT, 53/54, 69/70; alle anderen (auch 2 und 56) laufen ins Leere.
+Der ColdFire sendet ein wirkungsloses `(3,1026,56,2)`; seine Parameternummer steht allein bei
+0x0C711 (moveq, 0x38), der Wert 2 kommt aus der geteilten Konstante 0x0C637. Damit ließe sich
+ein zusätzlicher MG-Parameter mit dem Wert 2 setzen – bisher kein sinnvoller Kandidat, nichts
+gebaut. Audio-Encoder im MG: AAC, MPEG-1 Layer 2, PCM, G.711, G.728 (Klassen vorhanden,
+Auswahlweg unbekannt, im Handbuch nur AENC_BITRATE).
+
+**33.5 Werkzeuge.** Baukasten 1.6: Hinweise berichtigt (Tonpufferzeit aus p04 und Tonrate,
+Durchsatz mit Ton, Puffer-Regelung), Vorlagen für Test 1 und die Messläufe; Kern unverändert,
+alte Hashes bleiben. `build_ai.py`: dieselben Hinweise. `pvt_check.py` 1.7: Zeile „Datenrate im
+Mittelteil“ = Steigung Dateiposition gegen Tonzeit (20 s bis 10 s vor Ende); bei Überlast ist
+das der Host-Durchsatz, gültig nur bei lückenlosem Ton. Geprüft an AF8: 5,19 Mbit/s.
+
+**33.6 Testplan (alle 528 breit, p04 = 256, LED2/3 wie LED1, Schleifenton).**
+1. **Test 1** – 3800 + 192: `AE_V3800_A192_B528_P256_REIN`,
+   SHA `dffff832c10d90ed3c6721bd5c5b2cc1c049e1aeddefa28de7572d64b3697d19`. 2 min mit Musik.
+   Erwartung: kein Loch bei 4 s, Ton vollständig, Bild sauber. Startet die Aufnahme nicht:
+   p04 = 192.
+2. **Messlauf A/B** – 8000 + 192: `AE_V8000_A192_B528_P256_REIN`,
+   SHA `9cbadf2f8ca8096bd17aff5a4b26f929012720f1b5a298a95a45e825390b78da`. Zweimal 90 s mit
+   Stoppuhr: A ohne Audiokabel, B mit Musik. Bild springt (gewollt), Ton soll vollständig
+   bleiben; pvt_check 1.7 zeigt den Durchsatz. Erwartung A ≈ 5,2, B ≈ 4,4.
+3. **Messlauf C** – 8000 + 32: `AE_V8000_A32_B528_P256_REIN`,
+   SHA `939e9fae3732c64f5cd6775b57ebbe8d7ba5ce1624fac85add5400f84aeb94a9`, 90 s mit Musik.
+   Steigt der Durchsatz Richtung 5,2, kostet die Tonrate; bleibt er bei 4,4, kostet das
+   Kodieren echten Tons an sich.
+4. Betriebspunkt wählen (Video ≈ gemessener Durchsatz − Ton − 5 %), 30 min mit Ton und
+   4-GiB-Wechsel.
+5. Später: Startverzögerung gegen Plattenfüllung (frisch formatiert gegen gefüllt, je ein
+   Messlauf A), UART-Mitschnitt bei Tonverlust, Stromausfall-Test für die Zwischendatei.

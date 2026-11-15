@@ -82,6 +82,9 @@ const CORE = (() => {
   const RC_NAMES = ['RC9 Puffer-Regelung', 'RC10 Pufferbits', 'RC11 Transferrate', 'RC12 Startverzögerung', 'RC6 Größen-RC', 'RC7 Größentoleranz'];
   // MG-Handbuch 10.11: RC6/RC7 = SIZE_ENABLE / SIZE_BIT_TOLERANCE (Dateigröße = Soll ± Toleranz in Bit),
   // RC9/RC10 = BUFFER_ENABLE / BUFFER_SIZE_BITS (Leaky-Bucket für begrenzte Kanäle), RC11 = Kanalrate Bit/s, RC12 = Startverzögerung (90-kHz-Ticks).
+  // Puffermodell (Befunde §33): der Host holt erst rund TAU0 s nach dem Start ab; je Tonblock 64 Byte Verwaltung im MG-Puffer.
+  const TAU0 = 4, W_TON = 4300; // s; kbit/s Durchsatz mit echtem Ton (aus VID00007/08/10 gerechnet: 4,2-4,45 Mbit/s)
+  const audioPoolSeconds = (pages, kbit, srate) => pages * 2048 / (kbit * 125 + 64 * (srate || 48000) / 1024);
   const AUDIO_OK = [0, 48, 64, 96, 128, 192, 256, 320, 384]; // Vorschläge; 0 = nur Video; MG-Datenblatt: 8-384 kbit/s
   const AVSEL = 0x0c363;                           // moveq #1,d5 (0x7A01): MG ENC_INPUT_SELECT/ENC_AV_SELECT (Param 40/17), 1 = Audio+Video, 2 = nur Video
   const DEFAULTS = { video: 5000, audio: 384, width: 720, height: 576, widthN: 720, heightN: 480, p03: 2048, p04: 48, gop: [50, 50, 50], srate: 48000,
@@ -302,5 +305,5 @@ const CORE = (() => {
     return out;
   }
 
-  return { SIZE, KNOWN, H_ORIG, H_AE, DEFAULTS, LIMITS, AUDIO_OK, RC_NAMES, sha256, hex, at, identify, readSettings, build, label, sumMbit, withDefaults, listZip, readZipEntry, makeZip, applyDelta };
+  return { SIZE, KNOWN, H_ORIG, H_AE, DEFAULTS, LIMITS, AUDIO_OK, TAU0, W_TON, audioPoolSeconds, RC_NAMES, sha256, hex, at, identify, readSettings, build, label, sumMbit, withDefaults, listZip, readZipEntry, makeZip, applyDelta };
 })();

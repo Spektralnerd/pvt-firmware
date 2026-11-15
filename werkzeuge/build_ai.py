@@ -12,7 +12,7 @@ Dazu optionale Schluesselwort-Argumente:
                        (die RC-Erweiterung prueft eine gemeinsame Breite 0x2E062 = PAL-Breite;
                        weicht NTSC ab, laeuft NTSC ohne RC-Erweiterung - wie alle 528er-Builds bisher)
   gop=50 | gop=25,50,50  GOP-Laenge je LED: 0x2C086, 0x2C090, 0x2C09A (MG Param 24; AE 50, Original 60)
-  p03=2048             MG-Videopuffer (Seiten a 2 KB), 0x2A626; AB lief mit 832
+  p03=2048             MG-Videopuffer (Seiten a 2 KB), 0x2A626; Pinnacle/AB: 832
   tf=3,3,3             Rauschfilter je LED (moveq-Byte 0..127), 0x2B177/0x2B17D/0x2B183
   rein=1               LED2/LED3 bekommen die LED1-RC-Werte (AE rein)
   rc7=5000             Groessentoleranz RC7 = Video x Faktor (Bit), alle drei LED-Bloecke (AE 5000 = +-5 s Video).
@@ -20,7 +20,8 @@ Dazu optionale Schluesselwort-Argumente:
   rc11=1000            Transferrate RC11 = Video x Faktor (Bit/s), alle LEDs (AE 1000); Abfluss des Leaky-Bucket.
   rc9=1 rc10=1250000 rc12=11250
                        Puffer-Regelung fuer LED1 (BUFFER_ENABLE, BUFFER_SIZE_BITS, Startverzoegerung in 90-kHz-Ticks).
-                       AE: aus; AB lief mit 1/1250000/11250 (geprueft). rein=1 kopiert alles nach LED2/LED3.
+                       AE: aus. Kleines Modell 1250000/11250 kostete bei AC/AD 6-13 % Videozeit; sauber liefen
+                       5000000/45000 (AE LED2) und 10000000/90000 (AE LED3). rein=1 kopiert alles nach LED2/LED3.
   abtastrate=32000     Ton-Abtastrate, drei Stellen gemeinsam (alle im Original): 0x0C67A MG Objekt 1 Param 7
                        (AUDIO_SAMPLE_RATE), 0x1AA9E Host-Konfiguration (RAM-Struktur der Aufzeichnung),
                        0x2AA0C mp4a-Vorlage des MP4-Schreibers. UNGEPRUEFT: der 256*fs-Takt kommt laut
@@ -216,8 +217,16 @@ def build(src, outdir, width, video, audio, pages=None, x=None):
         hints.append("unter 3600 setzt der ColdFire MG-Param 10 auf 1 statt 2 (Modus der Original-Stufen)")
     if audio and (audio < 8 or audio > 384):
         hints.append("Audio ausserhalb des MG-Datenblatts (8..384)")
-    if audio >= 192:
-        hints.append("Audio >= 192: Bloecke >= 450 Byte toeteten den Tonpfad binnen 20 s")
+    if audio:
+        # Puffermodell (Befunde Abschnitt 33): Host holt erst rund 4 s nach dem Start ab; je Tonblock 64 Byte Verwaltung
+        tau_a = (pages or 48) * 2048 / (audio * 125 + 64 * x["abtastrate"] / 1024.0)
+        if tau_a < 4.5:
+            hints.append("Tonpuffer p04 = %d Seiten fasst nur %.1f s Ton bei %d kbit/s, der Host holt erst nach rund 4 s ab: "
+                         "Tonbloecke gehen schon beim Start verloren (VID00007). p04 = 256 nehmen" % (pages or 48, tau_a, audio))
+        elif tau_a < 8:
+            hints.append("Tonpuffer p04 = %d Seiten = %.1f s Ton: knapp bei Rueckstau (4500 + 96 verlor nach 70 s Ton). p04 = 256 nehmen" % (pages or 48, tau_a))
+        if 4300 < video + audio <= 5250:
+            hints.append("mit echtem Ton schaffte der Host nur 4,2-4,45 Mbit/s Summe (VID00007/08/10, gerechnet); darueber waechst der Rueckstau")
     for name, v, src_v in (("Breite", width, 720), ("Hoehe", x["hoehe"], 576), ("NTSC-Breite", x["ntsc"][0], 720), ("NTSC-Hoehe", x["ntsc"][1], 480)):
         if v != src_v:
             if v <= 16:
@@ -237,7 +246,11 @@ def build(src, outdir, width, video, audio, pages=None, x=None):
     if x["rc7"] != 5000:
         hints.append("RC7 x%d: ungeprueft; kleiner = flachere Spitzen, sehr klein = Qualitaet schwankt" % x["rc7"])
     if x["rc9"]:
-        hints.append("Puffer-Regelung LED1 an: AB lief mit 1250000/5000000/11250, andere Werte ungeprueft")
+        if x["rc10"] < 5000000:
+            hints.append("Puffer-Regelung mit kleinem Modell (%d Bit): AC/AD verloren mit 1,25 MBit/125 ms 6-13 %% Videozeit; "
+                         "sauber getestet 5000000/45000 und 10000000/90000" % x["rc10"])
+        else:
+            hints.append("Puffer-Regelung LED1 an (wie AE LED2/LED3 mit 5 bzw. 10 MBit sauber getestet)")
     if x["abtastrate"] != 48000:
         hints.append("Abtastrate %d: ungeprueft; Takt von aussen und AAC-Konfigbyte offen (pvt_check Zeile Abtastrate)" % x["abtastrate"])
         if x["abtastrate"] not in (22050, 24000, 32000, 44100, 48000):

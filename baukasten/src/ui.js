@@ -91,10 +91,11 @@
   const preset = (o) => CORE.withDefaults(o);
   const PRESETS = {
     ae: preset({}),
+    t1: preset({ video: 3800, audio: 192, width: 528, p04: 256, rein: true }),
+    t2: preset({ video: 8000, audio: 192, width: 528, p04: 256, rein: true }),
+    t3: preset({ video: 8000, audio: 32, width: 528, p04: 256, rein: true }),
     ton96: preset({ video: 4500, audio: 96, width: 528, rein: true }),
-    ton64: preset({ video: 4500, audio: 64, width: 528, rein: true }),
     nurvideo: preset({ audio: 0 }),
-    ai528: preset({ video: 4800, audio: 192, width: 528 }),
     rein: preset({ rein: true })
   };
   const NUM = ['video', 'audio', 'width', 'height', 'widthN', 'heightN', 'p03', 'p04', 'srate', 'rc7f', 'rc11f', 'rc10', 'rc12'];
@@ -119,14 +120,14 @@
   $('form').addEventListener('submit', e => e.preventDefault());
 
   const fmtTick = (kb) => (kb / 1000).toFixed(kb % 500 ? 2 : 1).replace('.', ',');
-  function renderBar(sum) {
+  function renderBar(sum, audio) {
     const ok = Number.isFinite(sum);
     $('sumVal').textContent = ok ? fmtM(sum) : '–';
     const lo = ok ? Math.min(4000, Math.max(0, Math.floor((sum - 500) / 500) * 500)) : 4000;
     const hi = ok ? Math.max(5500, Math.ceil((sum + 500) / 500) * 500) : 5500;
     const pos = (v) => Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100));
     const fill = $('sumFill'); fill.style.width = (ok ? pos(sum) : 0) + '%';
-    fill.className = 'fill' + (ok && sum > 5250 ? ' bad' : ok && sum > 5050 ? ' warn' : '');
+    fill.className = 'fill' + (ok && sum > 5250 ? ' bad' : ok && (sum > 5050 || (audio > 0 && sum > CORE.W_TON)) ? ' warn' : '');
     $('markOk').style.left = pos(5050) + '%'; $('markWall').style.left = pos(5250) + '%';
     const span = hi - lo, step = span <= 2000 ? 500 : span <= 6000 ? 1000 : span <= 15000 ? 2500 : span <= 40000 ? 5000 : 20000;
     const ticks = [];
@@ -150,7 +151,7 @@
   function onChange() {
     state.built = null; renderResult(null);
     const s = readForm(); const sum = s.video + s.audio;
-    renderBar(sum);
+    renderBar(sum, s.audio);
     const notes = [], D = CORE.DEFAULTS, L = CORE.LIMITS;
     const bad = (t) => notes.push(['bad', t]), warn = (t) => notes.push(['warn', t]), info = (t) => notes.push(['', t]);
     const intIn = (v, [lo, hi]) => Number.isInteger(v) && v >= lo && v <= hi;
@@ -168,18 +169,21 @@
     if (notes.length) { $('notes').innerHTML = notes.map(([c, t]) => '<li class="' + c + '">' + esc(t) + '</li>').join(''); updateBuildButton(); return; }
     // Hinweise aus Messungen und Datenblatt – sperren nichts
     if (sum > 5250) warn('Summe über der gemessenen Host-Mauer von 5,25 Mbit/s (AE mit Stille lief bis 5,02 fünf Stunden). Erwartung: leere Bilder in Phasen; mit echtem Ton sicher Aussetzer. Für den Versuch erlaubt.');
-    else if (sum > 5050) warn('Summe über dem bewährten Niveau von 5,05 Mbit/s. Mit echtem Ton riskant; AE selbst liegt mit 384 kbit/s Ton rechnerisch bei 5,38 und brach ab.');
-    else info('Summe unter dem bewährten Niveau: rechnerisch ' + Math.round(sum / 5250 * 100) + ' % der Mauer.');
+    else if (sum > 5050) warn('Summe über dem bewährten Niveau von 5,05 Mbit/s (gilt ohne Ton oder mit Stille). AE selbst liegt mit 384 kbit/s Ton rechnerisch bei 5,38 und brach ab.');
+    else info('Summe unter dem bewährten Niveau ohne Ton: rechnerisch ' + Math.round(sum / 5250 * 100) + ' % der Mauer.');
+    if (s.audio > 0 && sum > CORE.W_TON && sum <= 5250) warn('Mit echtem Ton schaffte der Host in drei Aufnahmen nur 4,2 bis 4,45 Mbit/s (VID00007/08/10, aus dem Pufferverlauf gerechnet) statt 5,25 ohne Ton. Summe ' + fmtM(sum) + ' liegt darüber: der Rückstau wächst langsam, bis ein MG-Puffer überläuft (5000 + 96 nach 19 s, 4500 + 96 nach 70 s). Für Dauerbetrieb mit Ton vorerst höchstens 4,2 ansetzen; der Messlauf 8000 + Ton liefert den genauen Wert.');
     if (s.video > 10000) warn('Videoziel über dem MG-Datenblatt (64 kbit/s bis 10 Mbit/s). Der MG kann abweisen oder stillschweigend begrenzen; der Host wäre ohnehin weit über der Mauer.');
     if (s.video < 3600) info('Unter 3600: der ColdFire setzt MG-Param 10 auf 1 statt 2 (so laufen die Original-Stufen mit 768/1200/1500). Anderer Encoder-Modus, kein Fehler.');
     if (s.video < 64) warn('Videoziel unter dem MG-Minimum von 64 kbit/s.');
     if (s.audio === 0) warn('Nur Video – geprüft 20.10. (VID00012): Aufnahme makellos (60 s, 5,25 Mbit/s, 0 Aussetzer), aber der ColdFire schreibt den Index unvollständig (nur die letzten ~120 Tabelleneinträge), die Datei spielt nicht. mp4_reparatur.py aus dem Test-Paket baut den Index neu (1 Befehl, geprüft). Alternative ohne Reparatur: Ton 8 kbit/s (Blöcke 21 Byte) – ungeprüft.');
     else {
       if (s.audio < 8 || s.audio > 384) warn('Ton ' + s.audio + ' kbit/s liegt außerhalb des MG-Datenblatts (8–384). Der MG kann abweisen oder begrenzen.');
-      if (s.audio >= 192) bad('Ton ' + s.audio + ' kbit/s: Blöcke über 450 Byte, der Tonpfad des ColdFire starb damit nach 20 s (VID00006/VID00007), unabhängig von der Videorate. Nur ohne Audiokabel brauchbar.');
-      else if (s.audio > 96) warn('Ton ' + s.audio + ': Blöcke von ' + Math.round(s.audio * 1000 * 1024 / 48000 / 8) + ' Byte, am Gerät ungeprüft (96 = 256 Byte hält, 192 = 512 Byte nicht).');
-      else if (!CORE.AUDIO_OK.includes(s.audio)) info('Ton ' + s.audio + ' kbit/s: Zwischenwert, der MG nimmt jede Zahl in Bit/s als Langzeit-Bitrate; Blöcke um ' + Math.round(s.audio * 1000 * 1024 / 48000 / 8) + ' Byte.');
-      if (s.audio < 192 && s.video > 4600) warn('Mit echtem Ton kippte das Video bei 5000 + 96 (VID00008) ab etwa 4,9 Mbit/s realer Rate; 4500 + 96 lief mit 99 % Ton. Reserve einplanen.');
+      const tauA = CORE.audioPoolSeconds(s.p04, s.audio, s.srate), tauTxt = tauA.toFixed(1).replace('.', ',') + ' s';
+      if (tauA < CORE.TAU0 + 0.5) bad('Tonpuffer zu klein: p04 = ' + s.p04 + ' Seiten fassen bei ' + s.audio + ' kbit/s nur ' + tauTxt + ' Ton. Der Host holt die ersten Daten erst rund ' + String(CORE.TAU0).replace('.', ',') + ' s nach dem Start ab – der Puffer läuft vorher über, der MG verwirft Tonblöcke (VID00007 mit 192: erstes Loch bei 4,00 s, Puffer rechnerisch zu 99,5 % voll). Ursache ist der Puffer, nicht die Blockgröße. p04 auf 256 stellen (Mobilygen-Standard). Ohne Audiokabel (Stille) bleiben die Blöcke winzig und der Puffer leer – deshalb lief AE so stundenlang.');
+      else if (tauA < 8) warn('Tonpuffer knapp: p04 = ' + s.p04 + ' Seiten = ' + tauTxt + ' Ton bei ' + s.audio + ' kbit/s. Reicht für den Start (rund 4 s), aber kaum für Rückstau: 4500 + 96 verlor so nach 70 s Ton (VID00010). Mit p04 256 wären es ' + CORE.audioPoolSeconds(256, s.audio, s.srate).toFixed(0) + ' s.');
+      else info('Tonpuffer: p04 = ' + s.p04 + ' Seiten = ' + tauTxt + ' Ton bei ' + s.audio + ' kbit/s (Start braucht rund 4 s).');
+      if (!CORE.AUDIO_OK.includes(s.audio)) info('Ton ' + s.audio + ' kbit/s: Zwischenwert, der MG nimmt jede Zahl in Bit/s als Langzeit-Bitrate; Blöcke um ' + Math.round(s.audio * 1000 * 1024 / 48000 / 8) + ' Byte.');
+      if (s.audio > 96 && s.p04 >= 256) info('Ton ' + s.audio + ' kbit/s mit p04 ' + s.p04 + ': am Gerät noch ungeprüft – das ist Test 1.');
     }
     const sizeNotes = (w, h, srcW, srcH, norm, tested) => {
       if (w === srcW && h === srcH) return;
@@ -207,9 +211,13 @@
     $('rcInfo').textContent = rcLine + ' · RC11 = ' + (s.video * s.rc11f).toLocaleString('de-DE') + ' Bit/s' + (s.rc9 ? ' · Puffer ' + (s.rc10 / 1000).toLocaleString('de-DE') + ' kBit = ' + (s.rc10 / (s.video * 1000)).toFixed(2).replace('.', ',') + ' s, Start ' + (s.rc12 / 90).toFixed(0) + ' ms' : ' · Puffer-Regelung aus (wie AE LED1)');
     if (s.rc7f !== 5000) warn('Größentoleranz ×' + s.rc7f + ' statt ×5000: ungeprüft. Kleiner = die Größenregelung zieht Ausreißer schneller zurück, Spitzen werden flacher; sehr klein (unter ×500 = 0,5 s) kann die Bildqualität bei Bewegung sichtbar schwanken.');
     if (s.rc11f !== 1000) warn('Transferrate ×' + s.rc11f + ' statt ×1000: ungeprüft; wirkt nur mit Puffer-Regelung (Abflussrate des Leaky-Bucket).');
-    if (s.rc9) warn('Puffer-Regelung an: LED1 bekommt das Leaky-Bucket-Modell. AB lief so (1,25 MBit, 5 Mbit/s, 125 ms, am Gerät geprüft), AE hat es für LED1 abgeschaltet und nur die Größenregelung behalten. Der MG hält damit die Rate über das Pufferfenster unter der Transferrate – das Modell für den begrenzten USB-Pfad; andere Werte als die von AB sind ungeprüft.');
-    if (s.p03 !== 2048) warn('Videopuffer p03 ' + s.p03 + ' Seiten: AB lief mit 832, sonst ungeprüft.');
-    if (s.p04 !== 48) warn('Audiopuffer p04 ' + s.p04 + ' Seiten: ungeprüft am Gerät.');
+    if (s.rc9) {
+      if (s.rc10 < 5000000) bad('Puffer-Regelung mit kleinem Modell (' + (s.rc10 / 1000).toLocaleString('de-DE') + ' kBit): Mit 1,25 MBit/125 ms verloren AC/AD bei Tageslicht 6 bis 13 % der Videozeit – der MG lässt Bilder aus, wenn eine Spitze nicht ins Modell passt. Sauber getestet sind 5.000.000 Bit / 45.000 Ticks (AE LED2) und 10.000.000 / 90.000 (AE LED3). Für den Versuch erlaubt, aber diese Werte eintragen.');
+      else warn('Puffer-Regelung an: LED1 bekommt das Leaky-Bucket-Modell mit ' + (s.rc10 / 1000000).toLocaleString('de-DE') + ' MBit. AE LED2 (5 MBit/45.000) und LED3 (10 MBit/90.000) liefen damit sauber; AE hat es für LED1 abgeschaltet und nur die Größenregelung behalten.');
+    }
+    if (s.p03 !== 2048) warn('Videopuffer p03 ' + s.p03 + ' Seiten: Pinnacle/AB liefen mit 832, sonst ungeprüft.');
+    if (s.p04 === 256) info('Audiopuffer p04 256 Seiten = Mobilygen-Standard (Pinnacle: 48). Passt laut Emulation in den MG-Speicher; am Gerät noch ungeprüft. Startet die Aufnahme nicht (rotes Blinken), 192 nehmen.');
+    else if (s.p04 !== 48) warn('Audiopuffer p04 ' + s.p04 + ' Seiten: ungeprüft am Gerät.');
     if (s.p03 + s.p04 > 2304) warn('p03 + p04 = ' + (s.p03 + s.p04) + ' Seiten übersteigt den belegten Speicherplan (2048 + 256 passten in der Emulation, 5025 von 5120 Seiten). Der MG könnte nicht starten.');
     if (s.rein) info('AE rein: LED2/LED3 am Gerät noch ungeprüft, LED1 bleibt wie AE.');
     if (s.tf.some(t => t > 3)) warn('TF über 3: bekannt sind die Stufen 0–3; größere Werte sind ungeprüft, der MG kann sie begrenzen oder abweisen.');
@@ -271,7 +279,8 @@
       '  MG-Puffer        Video p03 = ' + s.p03 + ' Seiten (' + s.p03 * 2 + ' KB), Audio p04 = ' + s.p04 + ' Seiten (' + s.p04 * 2 + ' KB)',
       '  LED2/LED3        ' + (s.rein ? 'wie LED1 (AE rein)' : 'wie AE (LED2 Modell 5 Mbit/0,5 s, LED3 10 Mbit/1 s)'),
       '  TF-Stufe         LED1 ' + s.tf[0] + ' / LED2 ' + s.tf[1] + ' / LED3 ' + s.tf[2],
-      '  Summe Video+Ton  ' + fmtM(sum) + ' (gemessene Host-Mauer 5,25; bewaehrt <= 5,05)' + (sum > 5250 ? ' - UEBER DER MAUER, Versuch' : ''),
+      '  Summe Video+Ton  ' + fmtM(sum) + ' (Host-Mauer ohne Ton 5,25, bewaehrt <= 5,05; mit echtem Ton gerechnet 4,2-4,45)' + (sum > 5250 ? ' - UEBER DER MAUER, Versuch' : ''),
+      ...(s.audio > 0 ? ['  Tonpuffer        p04 fasst ' + CORE.audioPoolSeconds(s.p04, s.audio, s.srate).toFixed(1) + ' s Ton (Start braucht rund 4 s)'] : []),
       '', 'STAND', '  ' + (k ? k.name + ': ' + k.status : 'Neue Kombination, 0 Hardwaretests.'),
       '  Freigabe fuer lange Laeufe erst nach 30 min mit Ton und einem 4-GiB-Wechsel.',
       '', 'GEAENDERTE WERTE (Datei-Offset, alt -> neu)', ...(b.patches.length ? b.patches.map(p => '  ' + CORE.at(p.o) + '  ' + String(p.old).padStart(10) + ' -> ' + String(p.neu).padStart(10) + '  ' + p.name) : ['  keine (identisch mit AE)']),

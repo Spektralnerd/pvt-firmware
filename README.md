@@ -40,17 +40,19 @@ file you supply. German documentation; the tools print German messages.*
    blau, dann Standby. MODE kurz drücken; Stick erst ziehen, wenn die USB-LED blau leuchtet.
 6. **Prüfen:** 1–2 Minuten aufnehmen, dann `python3 werkzeuge/pvt_check.py VID0000x.MP4`.
 
-## Stand der Dinge (Oktober 2026)
+## Stand der Dinge (November 2026)
 
 - **AE** (720×576i, 5000 kbit/s, Ton 384 kbit/s angefordert): 2 h 30 min und 5 h 03 min ohne
   Tonquelle fehlerfrei. Das ist der Vorführstand und die Basis aller Varianten.
 - **Mauer des Hosts:** Der ColdFire schreibt über USB Full Speed. Ohne Ton laufen 5,25 Mbit/s
   sauber (60 s), 6 Mbit/s und mehr verwerfen gleichmäßig Bilder. Mit Stille lag die Summe aus
   Video und Ton bei 5,02 Mbit/s über 5 Stunden; 5,25 ist die gemessene Grenze.
-- **Ton:** Der Tonpfad des Hosts stirbt bei AAC-Blöcken über etwa 300 Byte (192 und 384 kbit/s
-  bei 48 kHz) binnen 20 Sekunden, unabhängig von der Videorate; 96 kbit/s (256-Byte-Blöcke) hält.
-  Geprüfter Stand mit Ton: **528×576i, 4500 kbit/s, Ton 96 kbit/s** (99 % der Tonblöcke, eine
-  Störung in 2 Minuten; der 30-Minuten-Lauf steht noch aus).
+- **Ton (neu ausgewertet 15.11., Befunde §33):** Pinnacles Tonpuffer im MG (p04 = 48 Seiten)
+  fasst bei 192 kbit/s nur 3,6 s Ton, der Host holt aber erst rund 4 s nach dem Start ab – der
+  Puffer läuft über, Tonblöcke gehen verloren. Dazu schafft der Host mit echtem Ton nur etwa
+  4,2–4,45 Mbit/s Summe (aus den Aufnahmen gerechnet). Der bisherige Stand 528×576i, 4500 + 96
+  verliert deshalb nach 70 s Ton. **Offen am Gerät:** p04 = 256 Seiten (Mobilygen-Standard) mit
+  3800 + 192 und zwei Messläufe für den Durchsatz mit Ton; die Vorlagen stehen im Baukasten 1.6.
 - **Breite 528:** an die Auflösung einer 1/3"-CCD-Kamera (512 Punkte) angepasst, spart gemessen
   3–7 % Bits bei gleicher Qualität im Band der Kamera; Seitenverhältnis im MP4 korrekt (16:11 → 4:3).
 - **Nur Video:** Ein Byte schaltet den MG auf reines Video. Die Aufnahme ist makellos, aber der

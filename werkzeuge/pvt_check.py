@@ -41,7 +41,7 @@ import statistics
 import struct
 import sys
 
-VERSION = "1.6"
+VERSION = "1.7"
 
 # ---------------------------------------------------------------------------
 # MP4 / ISO-BMFF
@@ -949,6 +949,32 @@ def analyse(path, want_sha=False, parse_h264=True):
         res["verzahnung"]["ton_soll_je_sekunde"] = round(soll, 1)
         res["verzahnung"]["ton_erstes_loch_s"] = first_hole
         res["verzahnung"]["ton_tot_ab_s"] = dead_from
+        # v1.7: Datenrate im Mittelteil = Steigung "Dateiposition gegen Tonzeit". Der Ton laeuft mit dem
+        # Takt von aussen, lueckenloser Ton ist also eine Uhr. Bei Ueberlast (MG-Puffer voll, Bilder fehlen)
+        # ist der Rueckstau konstant und die Steigung der Durchsatz des Hosts; ohne Ueberlast die erzeugte Rate.
+        # Unabhaengig von Startverzoegerung und Restpuffer am Ende. Fenster: 20 s bis 10 s vor Ende.
+        n_a = len(a_s.off)
+        if ats and n_a > 200:
+            ta = [a_s.dts[i] / ats for i in range(n_a)]
+            t_end = ta[-1]
+            lo, hi = (20.0, t_end - 10.0) if t_end >= 45 else (t_end * 0.35, t_end * 0.9)
+            valid = True
+            if first_hole is not None:
+                # Ton lueckenhaft: nur den Teil vor dem ersten Loch werten, wenn er lang genug ist
+                if first_hole - 2.0 - lo >= 15:
+                    hi = min(hi, first_hole - 2.0)
+                else:
+                    valid = False
+            res["verzahnung"]["rate_gueltig"] = valid
+            pts = [(ta[i], a_s.off[i]) for i in range(n_a) if lo <= ta[i] <= hi] if valid else []
+            if len(pts) > 100:
+                mx = sum(x for x, _ in pts) / len(pts)
+                my = sum(y for _, y in pts) / len(pts)
+                sxx = sum((x - mx) ** 2 for x, _ in pts)
+                if sxx > 0:
+                    slope = sum((x - mx) * (y - my) for x, y in pts) / sxx
+                    res["verzahnung"]["rate_mittelteil_mbit"] = round(slope * 8 / 1e6, 3)
+                    res["verzahnung"]["rate_fenster_s"] = [round(lo, 1), round(hi, 1)]
     res["_frames"] = frames
     return res
 
@@ -1069,6 +1095,15 @@ def report(res, show_all=False):
                     fmt(soll, 1), z["ton_erstes_loch_s"], holes, len(c),
                     (", Tonpfad tot ab %d s" % z["ton_tot_ab_s"]) if z["ton_tot_ab_s"] is not None else ""))
                 L.append("  " + " ".join("%d:%d" % (k, x) for k, x in enumerate(c[:60])) + (" ..." if len(c) > 60 else ""))
+        if "rate_mittelteil_mbit" in z:
+            lo, hi = z["rate_fenster_s"]
+            L.append("Datenrate im Mittelteil: %s Mbit/s (Dateiposition gegen Tonzeit, %s bis %s s%s). Bei Ueberlast" % (
+                fmt(z["rate_mittelteil_mbit"], 2), fmt(lo, 0), fmt(hi, 0),
+                ", nur bis vor das erste Tonloch" if z.get("ton_erstes_loch_s") is not None else ""))
+            L.append("  (Bilder fehlen/leer) ist das der Durchsatz des Hosts, sonst die erzeugte Rate.")
+        elif z.get("rate_gueltig") is False:
+            L.append("Datenrate im Mittelteil: nicht bestimmbar, der Ton ist zu frueh lueckenhaft (er dient als Uhr).")
+            L.append("  Ersatz: Dateigroesse x 8 / gestoppte Sekunden.")
     if res["warnungen"]:
         L.append("")
         for w in res["warnungen"]:
